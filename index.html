@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Operator Logbook</title>
+  <meta name="description" content="Factory equipment issue tracker and knowledge base for process operators">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ==================== LOGIN SCREEN ==================== -->
+  <div id="login-screen">
+    <div class="login-container">
+      <div class="login-logo">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 1 1 0 10h-2M8 12h8"/>
+        </svg>
+        <h1>Operator Logbook</h1>
+        <p class="login-subtitle" data-i18n="login.subtitle">Factory Equipment Issue Tracker</p>
+      </div>
+      <form id="login-form" autocomplete="off">
+        <div class="form-group">
+          <label for="login-userid" data-i18n="login.userId">User ID</label>
+          <input type="text" id="login-userid" placeholder="e.g. admin, 001" required>
+        </div>
+        <div class="form-group">
+          <label for="login-password" data-i18n="login.password">Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" required>
+        </div>
+        <div id="login-error" class="form-error" style="display:none"></div>
+        <button type="submit" class="btn btn-primary btn-block" data-i18n="login.signIn">Sign In</button>
+      </form>
+      <p class="login-footer" data-i18n="login.footer">Contact your administrator for access</p>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN APP ==================== -->
+  <div id="app" style="display:none">
+
+    <!-- Mobile Header -->
+    <header id="mobile-header">
+      <button id="sidebar-toggle" class="btn-icon" aria-label="Toggle menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <span id="mobile-title">Dashboard</span>
+      <div id="mobile-user-badge"></div>
+    </header>
+
+    <!-- Sidebar Overlay (mobile) -->
+    <div id="sidebar-overlay"></div>
+
+    <!-- Sidebar -->
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5">
+          <path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 1 1 0 10h-2M8 12h8"/>
+        </svg>
+        <span class="sidebar-brand">Logbook</span>
+      </div>
+
+      <ul class="sidebar-nav">
+        <li>
+          <a href="#" class="nav-link active" data-view="dashboard">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span data-i18n="nav.dashboard">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-view="table">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h18M3 14h18M3 6h18M3 18h18M8 6v12M16 6v12"/></svg>
+            <span data-i18n="nav.table">Incident Log</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-view="editor">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <span data-i18n="nav.newIncident">New Incident</span>
+          </a>
+        </li>
+        <li class="nav-divider"></li>
+        <li>
+          <a href="#" class="nav-link" data-view="zones">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span data-i18n="nav.zones">Zones</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-view="settings">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span data-i18n="nav.settings">Settings</span>
+          </a>
+        </li>
+        <li id="nav-admin" style="display:none">
+          <a href="#" class="nav-link" data-view="admin">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span data-i18n="nav.admin">User Management</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="sidebar-avatar">J</div>
+          <div class="user-meta">
+            <span class="user-name" id="sidebar-username">Jack</span>
+            <span class="user-role" id="sidebar-role">Admin</span>
+          </div>
+        </div>
+        <button id="btn-logout" class="btn-icon" title="Logout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ==================== CONTENT AREA ==================== -->
+    <main id="content">
+
+      <!-- DASHBOARD VIEW -->
+      <section id="view-dashboard" class="view active">
+        <div class="view-header">
+          <h1 data-i18n="dashboard.title">Dashboard</h1>
+          <div class="view-header-actions">
+            <select id="dash-period" class="select-sm">
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="all">All time</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Factory Map (Moved to Top) -->
+        <div class="map-card" id="dash-map-container" style="display:none; margin-bottom: 24px;">
+          <div class="map-header">
+            <h3 data-i18n="dashboard.factoryMap">Factory Floor Plan</h3>
+            <span class="text-muted" data-i18n="dashboard.mapHint">Click a zone to view open issues or add a new log.</span>
+          </div>
+          <div class="map-wrapper" id="dash-map-wrapper">
+            <img id="dash-floorplan-img" style="width:100%;display:block;border-radius:var(--radius)" alt="Floor Plan">
+            <div id="dash-pins-container"></div>
+          </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card" id="stat-total">
+            <div class="stat-icon stat-icon-blue">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div class="stat-data">
+              <span class="stat-value" id="stat-total-val">0</span>
+              <span class="stat-label" data-i18n="dashboard.totalIncidents">Total Incidents</span>
+            </div>
+          </div>
+          <div class="stat-card" id="stat-open">
+            <div class="stat-icon stat-icon-red">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div class="stat-data">
+              <span class="stat-value" id="stat-open-val">0</span>
+              <span class="stat-label" data-i18n="dashboard.openIssues">Open Issues</span>
+            </div>
+          </div>
+          <div class="stat-card" id="stat-week">
+            <div class="stat-icon stat-icon-yellow">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div class="stat-data">
+              <span class="stat-value" id="stat-week-val">0</span>
+              <span class="stat-label" data-i18n="dashboard.thisWeek">This Week</span>
+            </div>
+          </div>
+          <div class="stat-card" id="stat-top">
+            <div class="stat-icon stat-icon-purple">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="stat-data">
+              <span class="stat-value stat-value-sm" id="stat-top-val">—</span>
+              <span class="stat-label" data-i18n="dashboard.topEquipment">Most Frequent</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h3 data-i18n="dashboard.byEquipment">By Equipment Type</h3>
+            <canvas id="chart-equipment"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3 data-i18n="dashboard.bySeverity">By Severity</h3>
+            <canvas id="chart-severity"></canvas>
+          </div>
+          <div class="chart-card chart-card-wide">
+            <h3 data-i18n="dashboard.byDay">By Day of Week</h3>
+            <canvas id="chart-day"></canvas>
+          </div>
+          <div class="chart-card chart-card-wide">
+            <h3 data-i18n="dashboard.trend">Incident Trend</h3>
+            <canvas id="chart-trend"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent Incidents -->
+        <div class="recent-card">
+          <h3 data-i18n="dashboard.recentOpen">Recent Open Incidents</h3>
+          <div id="recent-list" class="recent-list"></div>
+        </div>
+      </section>
+
+      <!-- TABLE VIEW -->
+      <section id="view-table" class="view">
+        <div class="view-header">
+          <h1 data-i18n="table.title">Incident Log</h1>
+          <div class="view-header-actions">
+            <button class="btn btn-outline btn-sm" id="btn-export-csv" title="Export to Excel">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Export CSV</span>
+            </button>
+            <button class="btn btn-primary btn-sm" id="btn-new-from-table">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span data-i18n="table.newIncident">New Incident</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar">
+          <input type="text" id="filter-search" class="input-sm" data-i18n-placeholder="table.search" placeholder="Search incidents...">
+          <select id="filter-equipment" class="select-sm">
+            <option value="" data-i18n="table.allEquipment">All Equipment</option>
+            <option value="Conveyor">Conveyor</option>
+            <option value="Sensor">Sensor</option>
+            <option value="PLC">PLC</option>
+            <option value="Freezer">Freezer</option>
+            <option value="Other">Other</option>
+          </select>
+          <select id="filter-zone" class="select-sm">
+            <option value="" data-i18n="table.allZones">All Zones</option>
+          </select>
+          <select id="filter-severity" class="select-sm">
+            <option value="" data-i18n="table.allSeverity">All Severity</option>
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+          <select id="filter-status" class="select-sm">
+            <option value="" data-i18n="table.allStatus">All Status</option>
+            <option value="Open">Open</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrapper">
+          <table id="incident-table">
+            <thead>
+              <tr>
+                <th class="sortable" data-sort="timestamp" data-i18n="table.date">Date</th>
+                <th class="sortable" data-sort="equipmentType" data-i18n="table.equipment">Equipment</th>
+                <th class="sortable" data-sort="zone" data-i18n="table.zone">Zone</th>
+                <th class="sortable" data-sort="description" data-i18n="table.notesCol">Notes</th>
+                <th class="sortable" data-sort="severity" data-i18n="table.severity">Severity</th>
+                <th class="sortable" data-sort="status" data-i18n="table.status">Status</th>
+                <th data-i18n="table.actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="incident-tbody"></tbody>
+          </table>
+          <div id="table-empty" class="empty-state" style="display:none">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <p data-i18n="table.empty">No incidents found</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- EDITOR VIEW -->
+      <section id="view-editor" class="view">
+        <div class="view-header">
+          <h1 id="editor-title" data-i18n="editor.newTitle">New Incident</h1>
+          <div class="view-header-actions">
+            <button class="btn btn-ghost btn-sm" id="btn-cancel-edit">
+              <span data-i18n="editor.cancel">Cancel</span>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="btn-save-and-more" style="border-color: var(--accent); color: var(--accent);">
+              <span data-i18n="editor.saveAndMore">Save & Add More</span>
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-save-incident">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              <span data-i18n="editor.save">Save</span>
+            </button>
+          </div>
+        </div>
+
+        <form id="incident-form" class="editor-form">
+          <input type="hidden" id="edit-id">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="edit-timestamp" data-i18n="editor.dateTime">Date & Time</label>
+              <input type="datetime-local" id="edit-timestamp" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-equipment" data-i18n="editor.equipmentType">Equipment Type</label>
+              <select id="edit-equipment" required>
+                <option value="">Select...</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="edit-zone" data-i18n="editor.zone">Zone</label>
+              <select id="edit-zone" required>
+                <option value="">Select...</option>
+              </select>
+              <div id="quick-zones-container" class="quick-tags-list" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+                <!-- Zone buttons will be injected here -->
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="edit-severity" data-i18n="editor.severity">Severity</label>
+              <select id="edit-severity" required>
+                <option value="">Select...</option>
+                <option value="Low">🟢 Low</option>
+                <option value="Medium">🟡 Medium</option>
+                <option value="High">🟠 High</option>
+                <option value="Critical">🔴 Critical</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-description" data-i18n="editor.notes">Notes / Details</label>
+            <textarea id="edit-description" rows="5" placeholder="What happened? Include details about the issue..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-tags" data-i18n="editor.tags">Tags</label>
+            <input type="text" id="edit-tags" placeholder="e.g. jam, motor, belt (comma separated)">
+            <div id="quick-tags-container" class="quick-tags-list" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+              <!-- Quick tags will be injected here -->
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label data-i18n="editor.status">Status</label>
+            <div class="status-toggle">
+              <button type="button" class="status-btn active" data-status="Open">Open</button>
+              <button type="button" class="status-btn" data-status="Resolved">Resolved</button>
+            </div>
+          </div>
+
+          <!-- Media Upload -->
+          <div class="form-group">
+            <label data-i18n="editor.media">Attachments (Images / Videos)</label>
+            <div id="media-dropzone" class="dropzone">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <p data-i18n="editor.dropzone">Drop files here or click to upload</p>
+              <input type="file" id="media-input" multiple accept="image/*,video/*" style="display:none">
+            </div>
+            <div id="media-preview" class="media-preview-grid"></div>
+          </div>
+        </form>
+      </section>
+
+      <!-- ZONES VIEW -->
+      <section id="view-zones" class="view">
+        <div class="view-header">
+          <h1 data-i18n="zones.title">Zone Management</h1>
+          <div class="view-header-actions">
+            <button class="btn btn-primary btn-sm" id="btn-add-zone">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span data-i18n="zones.addZone">Add Zone</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Floor Plan Management -->
+        <div class="settings-card" style="margin-bottom:24px;">
+          <h3 data-i18n="zones.floorPlanTitle">Factory Floor Plan</h3>
+          <p class="text-muted" data-i18n="zones.floorPlanDesc">Upload a map and drop pins to help operators locate issues quickly.</p>
+          <div class="btn-group" style="margin-bottom:16px;">
+            <button class="btn btn-outline btn-sm" id="btn-upload-plan" data-i18n="zones.uploadPlan">Upload Image</button>
+            <input type="file" id="floorplan-input" accept="image/*" style="display:none">
+          </div>
+          <div id="admin-map-wrapper" class="map-wrapper" style="display:none; cursor:crosshair; border:2px dashed var(--border);">
+            <img id="admin-floorplan-img" style="width:100%;display:block;opacity:0.6" alt="Floor Plan Setup">
+            <p style="text-align:center; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; font-weight:bold" data-i18n="zones.clickToPin">Click on the image to place a new zone pin.</p>
+            <div id="admin-pins-container"></div>
+          </div>
+        </div>
+
+        <div id="zones-list" class="zones-list"></div>
+
+        <!-- Zone Modal -->
+        <div id="zone-modal" class="modal" style="display:none">
+          <div class="modal-overlay"></div>
+          <div class="modal-content">
+            <h2 id="zone-modal-title" data-i18n="zones.addZone">Add Zone</h2>
+            <form id="zone-form">
+              <input type="hidden" id="zone-edit-id">
+              <div class="form-group">
+                <label for="zone-name" data-i18n="zones.name">Zone Name</label>
+                <input type="text" id="zone-name" placeholder="e.g. Line A, Freezer Room 1" required>
+              </div>
+              <div class="form-group">
+                <label for="zone-color" data-i18n="zones.color">Color</label>
+                <input type="color" id="zone-color" value="#0ea5e9">
+              </div>
+              <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" id="btn-zone-cancel" data-i18n="common.cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" data-i18n="common.save">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS VIEW -->
+      <section id="view-settings" class="view">
+        <div class="view-header">
+          <h1 data-i18n="settings.title">Settings</h1>
+        </div>
+
+        <div class="settings-grid">
+          <!-- Profile -->
+          <div class="settings-card">
+            <h3 data-i18n="settings.profile">Profile</h3>
+            <div class="form-group">
+              <label for="settings-display-name" data-i18n="settings.displayName">Display Name</label>
+              <input type="text" id="settings-display-name">
+            </div>
+            <div class="form-group">
+              <label for="settings-new-password" data-i18n="settings.newPassword">New Password</label>
+              <input type="password" id="settings-new-password" placeholder="Leave blank to keep current">
+            </div>
+            <button class="btn btn-primary btn-sm" id="btn-save-profile" data-i18n="settings.saveProfile">Save Profile</button>
+          </div>
+
+          <!-- Preferences -->
+          <div class="settings-card">
+            <h3 data-i18n="settings.preferences">Preferences</h3>
+            <div class="form-group">
+              <label for="settings-language" data-i18n="settings.language">Language</label>
+              <select id="settings-language">
+                <option value="en">English</option>
+                <option value="zh-TW">繁體中文</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="settings-theme" data-i18n="settings.theme">Theme</label>
+              <select id="settings-theme">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Data -->
+          <div class="settings-card">
+            <h3 data-i18n="settings.data">Data Management</h3>
+            <p class="text-muted" data-i18n="settings.dataDesc">Export or import all incident data as JSON for backup and sharing.</p>
+            <div class="btn-group">
+              <button class="btn btn-outline btn-sm" id="btn-export" data-i18n="settings.export">Export JSON</button>
+              <button class="btn btn-outline btn-sm" id="btn-import" data-i18n="settings.import">Import JSON</button>
+              <input type="file" id="import-file" accept=".json" style="display:none">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADMIN VIEW -->
+      <section id="view-admin" class="view">
+        <div class="view-header">
+          <h1 data-i18n="admin.title">User Management</h1>
+          <div class="view-header-actions">
+            <button class="btn btn-primary btn-sm" id="btn-add-user">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span data-i18n="admin.addUser">Add User</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="table-wrapper" style="margin-bottom: 32px;">
+          <table id="users-table">
+            <thead>
+              <tr>
+                <th data-i18n="admin.userId">User ID</th>
+                <th data-i18n="admin.displayName">Display Name</th>
+                <th data-i18n="admin.role">Role</th>
+                <th data-i18n="admin.created">Created</th>
+                <th data-i18n="admin.actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Global Configuration -->
+        <div class="settings-card" id="admin-config-section">
+          <h2 data-i18n="admin.manageSettings" style="margin-bottom: 16px; font-size: 1.25rem;">Configuration</h2>
+          <div class="form-group">
+            <label for="admin-types-input" data-i18n="admin.equipmentTypes">Equipment Types (one per line)</label>
+            <textarea id="admin-types-input" rows="5" placeholder="Conveyor&#10;Sensor&#10;..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="admin-tags-input" data-i18n="admin.commonTags">Common Tags (one per line)</label>
+            <textarea id="admin-tags-input" rows="5" placeholder="motor&#10;belt&#10;..."></textarea>
+          </div>
+          <button class="btn btn-primary" id="btn-save-admin-settings" data-i18n="admin.saveSettings">Save Configuration</button>
+        </div>
+
+        <!-- User Modal -->
+        <div id="user-modal" class="modal" style="display:none">
+          <div class="modal-overlay"></div>
+          <div class="modal-content">
+            <h2 id="user-modal-title" data-i18n="admin.addUser">Add User</h2>
+            <form id="user-form">
+              <div class="form-group">
+                <label data-i18n="admin.userId">User ID</label>
+                <input type="text" id="user-new-id" readonly>
+              </div>
+              <div class="form-group">
+                <label data-i18n="admin.displayName">Display Name</label>
+                <input type="text" id="user-new-name" placeholder="e.g. Tom, Sarah" required>
+              </div>
+              <div class="form-group">
+                <label data-i18n="admin.generatedPassword">Generated Password</label>
+                <div class="password-display">
+                  <input type="text" id="user-new-password" readonly>
+                  <button type="button" class="btn-icon" id="btn-copy-password" title="Copy">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" id="btn-user-cancel" data-i18n="common.cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" data-i18n="admin.createUser">Create User</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Password Reset Modal -->
+        <div id="reset-modal" class="modal" style="display:none">
+          <div class="modal-overlay"></div>
+          <div class="modal-content">
+            <h2 data-i18n="admin.resetPassword">Reset Password</h2>
+            <p id="reset-info" class="text-muted"></p>
+            <div class="form-group">
+              <label data-i18n="admin.newPassword">New Password</label>
+              <div class="password-display">
+                <input type="text" id="reset-new-password" readonly>
+                <button type="button" class="btn-icon" id="btn-copy-reset-password" title="Copy">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-ghost" id="btn-reset-cancel" data-i18n="common.cancel">Cancel</button>
+              <button type="button" class="btn btn-primary" id="btn-reset-confirm" data-i18n="common.confirm">Confirm Reset</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INCIDENT DETAIL VIEW -->
+      <section id="view-detail" class="view">
+        <div class="view-header">
+          <button class="btn btn-ghost btn-sm" id="btn-back-to-table">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            <span data-i18n="common.back">Back</span>
+          </button>
+          <div class="view-header-actions">
+            <button class="btn btn-outline btn-sm" id="btn-edit-incident">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              <span data-i18n="common.edit">Edit</span>
+            </button>
+            <button class="btn btn-danger btn-sm" id="btn-delete-incident">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <span data-i18n="common.delete">Delete</span>
+            </button>
+          </div>
+        </div>
+        <div id="detail-content" class="detail-content"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <!-- Confirm Dialog -->
+  <div id="confirm-dialog" class="modal" style="display:none">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-sm">
+      <h2 id="confirm-title">Confirm</h2>
+      <p id="confirm-message"></p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="confirm-no" data-i18n="common.cancel">Cancel</button>
+        <button class="btn btn-danger" id="confirm-yes" data-i18n="common.confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase Compat libraries -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
+
+  <!-- Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/table.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/zones.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
