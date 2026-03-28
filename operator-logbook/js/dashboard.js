@@ -19,6 +19,7 @@ const Dashboard = {
     this.renderMap(mapBase64, allIncidents, zones);
     this.renderEquipmentChart(incidents);
     this.renderSeverityChart(incidents);
+    this.renderDayChart(incidents);
     this.renderTrendChart(incidents, period);
     this.renderRecentOpen(allIncidents);
   },
@@ -173,6 +174,58 @@ const Dashboard = {
               usePointStyle: true,
               font: { family: 'Inter', size: 12 }
             }
+          }
+        }
+      }
+    });
+  },
+
+  renderDayChart(incidents) {
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+
+    incidents.forEach(inc => {
+      if (inc.timestamp) {
+        const d = new Date(inc.timestamp);
+        counts[d.getDay()]++;
+      }
+    });
+
+    if (this.charts.day) this.charts.day.destroy();
+
+    const ctx = document.getElementById('chart-day').getContext('2d');
+    const colors = ['#f43f5e', '#0ea5e9', '#0ea5e9', '#0ea5e9', '#0ea5e9', '#0ea5e9', '#f43f5e'];
+
+    this.charts.day = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: dayNames,
+        datasets: [{
+          data: counts,
+          backgroundColor: colors.map(c => c + '33'),
+          borderColor: colors,
+          borderWidth: 1.5,
+          borderRadius: 4,
+          barThickness: 30,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: '#64748b', font: { family: 'Inter' } }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              color: '#64748b',
+              font: { family: 'Inter' }
+            },
+            grid: { color: 'rgba(255,255,255,0.04)' }
           }
         }
       }

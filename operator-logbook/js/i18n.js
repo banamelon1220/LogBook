@@ -123,6 +123,8 @@ const I18n = {
       'common.delete': 'Delete',
       'common.deleted': 'Deleted successfully',
       'common.deleteConfirm': 'Are you sure you want to delete this?',
+      'dashboard.byDay': 'By Day of Week',
+      'editor.saveAndMore': 'Save & Add More',
     },
 
     'zh-TW': {
@@ -242,6 +244,8 @@ const I18n = {
       'common.delete': '刪除',
       'common.deleted': '已成功刪除',
       'common.deleteConfirm': '確定要刪除嗎？',
+      'dashboard.byDay': '依星期分佈',
+      'editor.saveAndMore': '儲存並新增下一筆',
     }
   },
 
