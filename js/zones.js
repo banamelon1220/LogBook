@@ -34,15 +34,41 @@ const Zones = {
       const file = e.target.files[0];
       if (!file) return;
 
+      // Basic validation
+      if (!file.type.startsWith('image/')) {
+        App.toast(I18n.t('zones.invalidFileType') || 'Please upload an image file.', 'error');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        App.toast(I18n.t('zones.fileTooLarge') || 'File is too large (max 5MB).', 'error');
+        return;
+      }
+
       const btn = document.getElementById('btn-upload-plan');
+      const originalText = btn.textContent;
       btn.textContent = 'Uploading...';
       btn.disabled = true;
 
       const reader = new FileReader();
       reader.onload = async (ev) => {
-        await DB.saveFloorPlan(ev.target.result);
-        await this.refresh();
-        btn.textContent = I18n.t('zones.uploadPlan') || 'Upload Image';
+        try {
+          await DB.saveFloorPlan(ev.target.result);
+          await this.refresh();
+          App.toast(I18n.t('zones.uploadSuccess') || 'Floor plan updated successfully!', 'success');
+        } catch (err) {
+          console.error('Floor plan upload failed:', err);
+          App.toast(I18n.t('zones.uploadError') || 'Upload failed. Check Storage rules or network.', 'error');
+        } finally {
+          btn.textContent = originalText;
+          btn.disabled = false;
+          // Reset input to allow re-uploading the same file if it failed
+          e.target.value = '';
+        }
+      };
+      reader.onerror = () => {
+        App.toast('Error reading file.', 'error');
+        btn.textContent = originalText;
         btn.disabled = false;
       };
       reader.readAsDataURL(file);

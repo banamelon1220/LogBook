@@ -228,9 +228,17 @@ const DB = {
 
   // Helper
   async _uploadBase64(path, base64Str) {
-    const ref = storage.ref().child(path);
-    await ref.putString(base64Str, 'data_url');
-    return await ref.getDownloadURL();
+    try {
+      const ref = storage.ref().child(path);
+      await ref.putString(base64Str, 'data_url');
+      return await ref.getDownloadURL();
+    } catch (err) {
+      console.error('Firebase Storage Upload Error:', err.code, err.message);
+      if (err.code === 'storage/unauthorized') {
+        console.warn('Check your Firebase Storage Security Rules! They might be blocking writes.');
+      }
+      throw err;
+    }
   },
 
   // --- Media (Images / Videos) ---
