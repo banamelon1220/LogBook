@@ -88,6 +88,18 @@ const Admin = {
         this.resetUserId = null;
       }
     });
+
+    // Save Global Settings
+    document.getElementById('btn-save-admin-settings').addEventListener('click', async () => {
+      const typesText = document.getElementById('admin-types-input').value;
+      const tagsText = document.getElementById('admin-tags-input').value;
+
+      const equipmentTypes = typesText.split('\n').map(t => t.trim()).filter(t => t);
+      const commonTags = tagsText.split('\n').map(t => t.trim()).filter(t => t);
+
+      await DB.updateSettings({ equipmentTypes, commonTags });
+      App.toast(I18n.t('admin.settingsSaved'), 'success');
+    });
   },
 
   async refresh() {
@@ -133,5 +145,10 @@ const Admin = {
 
       list.appendChild(tr);
     });
+
+    // Load Settings
+    const settings = await DB.getSettings();
+    document.getElementById('admin-types-input').value = (settings.equipmentTypes || []).join('\n');
+    document.getElementById('admin-tags-input').value = (settings.commonTags || []).join('\n');
   }
 };

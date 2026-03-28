@@ -312,11 +312,6 @@
               <label for="edit-equipment" data-i18n="editor.equipmentType">Equipment Type</label>
               <select id="edit-equipment" required>
                 <option value="">Select...</option>
-                <option value="Conveyor">🔗 Conveyor</option>
-                <option value="Sensor">📡 Sensor</option>
-                <option value="PLC">🖥️ PLC</option>
-                <option value="Freezer">❄️ Freezer</option>
-                <option value="Other">🔧 Other</option>
               </select>
             </div>
           </div>
@@ -348,6 +343,9 @@
           <div class="form-group">
             <label for="edit-tags" data-i18n="editor.tags">Tags</label>
             <input type="text" id="edit-tags" placeholder="e.g. jam, motor, belt (comma separated)">
+            <div id="quick-tags-container" class="quick-tags-list" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+              <!-- Quick tags will be injected here -->
+            </div>
           </div>
 
           <div class="form-group">
@@ -489,7 +487,7 @@
           </div>
         </div>
 
-        <div class="table-wrapper">
+        <div class="table-wrapper" style="margin-bottom: 32px;">
           <table id="users-table">
             <thead>
               <tr>
@@ -502,6 +500,20 @@
             </thead>
             <tbody id="users-tbody"></tbody>
           </table>
+        </div>
+
+        <!-- Global Configuration -->
+        <div class="settings-card" id="admin-config-section">
+          <h2 data-i18n="admin.manageSettings" style="margin-bottom: 16px; font-size: 1.25rem;">Configuration</h2>
+          <div class="form-group">
+            <label for="admin-types-input" data-i18n="admin.equipmentTypes">Equipment Types (one per line)</label>
+            <textarea id="admin-types-input" rows="5" placeholder="Conveyor&#10;Sensor&#10;..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="admin-tags-input" data-i18n="admin.commonTags">Common Tags (one per line)</label>
+            <textarea id="admin-tags-input" rows="5" placeholder="motor&#10;belt&#10;..."></textarea>
+          </div>
+          <button class="btn btn-primary" id="btn-save-admin-settings" data-i18n="admin.saveSettings">Save Configuration</button>
         </div>
 
         <!-- User Modal -->

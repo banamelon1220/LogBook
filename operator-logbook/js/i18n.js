@@ -123,8 +123,14 @@ const I18n = {
       'common.delete': 'Delete',
       'common.deleted': 'Deleted successfully',
       'common.deleteConfirm': 'Are you sure you want to delete this?',
-      'dashboard.byDay': 'By Day of Week',
+      'editor.save': 'Save & Dashboard',
+      'editor.quickTags': 'Common Tags',
       'editor.saveAndMore': 'Save & Add More',
+      'admin.manageSettings': 'Configuration',
+      'admin.equipmentTypes': 'Equipment Types (one per line)',
+      'admin.commonTags': 'Common Tags (one per line)',
+      'admin.saveSettings': 'Save Configuration',
+      'admin.settingsSaved': 'Configuration saved successfully',
     },
 
     'zh-TW': {
@@ -245,7 +251,14 @@ const I18n = {
       'common.deleted': '已成功刪除',
       'common.deleteConfirm': '確定要刪除嗎？',
       'dashboard.byDay': '依星期分佈',
+      'editor.save': '儲存並返回',
+      'editor.quickTags': '常用標籤',
       'editor.saveAndMore': '儲存並新增下一筆',
+      'admin.manageSettings': '系統配置',
+      'admin.equipmentTypes': '設備類型 (每行一個)',
+      'admin.commonTags': '常用標籤 (每行一個)',
+      'admin.saveSettings': '儲存配置',
+      'admin.settingsSaved': '系統配置已儲存',
     }
   },
 

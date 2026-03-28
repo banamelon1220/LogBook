@@ -100,11 +100,10 @@ const Editor = {
     const localISO = new Date(now - tzOffsetMs).toISOString().slice(0,16);
     document.getElementById('edit-timestamp').value = localISO;
 
-    document.getElementById('edit-equipment').value = 'Conveyor';
-    document.getElementById('edit-severity').value = 'Low';
+    // Default values will be handled after settings load in resetForm
     
     document.querySelectorAll('.status-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.status === 'Resolved');
+      b.classList.toggle('active', b.dataset.status === 'Open'); // Changed default for new to Open
     });
 
     await App.navigate('editor');
@@ -140,14 +139,49 @@ const Editor = {
     document.querySelectorAll('.status-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.status === 'Open');
     });
-    this.currentMedia = [];
     this.renderMediaPreview();
 
+    // Load Dynamic Settings (Equipment & Zones & Quick Tags)
+    const settings = await DB.getSettings();
+    
+    // Equipment
+    const eqSelect = document.getElementById('edit-equipment');
+    const oldEq = eqSelect.value;
+    eqSelect.innerHTML = '<option value="">Select...</option>';
+    (settings.equipmentTypes || []).forEach(type => {
+      eqSelect.innerHTML += `<option value="${type}">${type}</option>`;
+    });
+    if (oldEq) eqSelect.value = oldEq;
+
+    // Zones
     const zoneSelect = document.getElementById('edit-zone');
+    const oldZone = zoneSelect.value;
     zoneSelect.innerHTML = '<option value="">Select...</option>';
     const zones = await DB.getZones();
     zones.sort((a,b) => a.order - b.order).forEach(zone => {
       zoneSelect.innerHTML += `<option value="${zone.name}">${zone.name}</option>`;
+    });
+    if (oldZone) zoneSelect.value = oldZone;
+
+    // Quick Tags
+    const tagsContainer = document.getElementById('quick-tags-container');
+    tagsContainer.innerHTML = '';
+    (settings.commonTags || []).forEach(tag => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-outline btn-xs';
+      btn.style.padding = '2px 8px';
+      btn.style.fontSize = '12px';
+      btn.textContent = tag;
+      btn.addEventListener('click', () => {
+        const input = document.getElementById('edit-tags');
+        const current = input.value.split(',').map(t => t.trim()).filter(t => t);
+        if (!current.includes(tag)) {
+          current.push(tag);
+          input.value = current.join(', ');
+        }
+      });
+      tagsContainer.appendChild(btn);
     });
   },
 
@@ -211,7 +245,7 @@ const Editor = {
       App.toast(I18n.t('editor.saved'), 'success');
       
       if (shouldRedirect) {
-        await App.showDetail(incidentId);
+        await App.navigate('dashboard');
       } else {
         await this.openNew();
       }

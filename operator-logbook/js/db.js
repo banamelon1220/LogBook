@@ -47,6 +47,14 @@ const DB = {
         this.addZone({ id: this.uuid(), name: 'Freezer Room', color: '#8b5cf6', order: 2 })
       ]);
     }
+    // Create default settings if none exist
+    const settings = await this.getSettings();
+    if (!settings.equipmentTypes || !settings.commonTags) {
+      await this.updateSettings({
+        equipmentTypes: settings.equipmentTypes || ['Conveyor', 'Sensor', 'PLC', 'Freezer', 'Other'],
+        commonTags: settings.commonTags || ['jam', 'motor', 'belt', 'electrical', 'mechanical', 'operator error']
+      });
+    }
   },
 
   // --- Users ---
@@ -204,6 +212,18 @@ const DB = {
     } else {
       await firestore.collection('settings').doc('general').set({ floorPlanUrl: null }, { merge: true });
     }
+  },
+
+  // --- Settings (Equipment Types / Common Tags) ---
+  async getSettings() {
+    const doc = await firestore.collection('settings').doc('general').get();
+    if (doc.exists) return doc.data();
+    return {};
+  },
+
+  async updateSettings(updates) {
+    await firestore.collection('settings').doc('general').set(updates, { merge: true });
+    return this.getSettings();
   },
 
   // Helper
