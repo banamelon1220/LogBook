@@ -100,10 +100,11 @@ const Editor = {
     const localISO = new Date(now - tzOffsetMs).toISOString().slice(0,16);
     document.getElementById('edit-timestamp').value = localISO;
 
-    // Default values will be handled after settings load in resetForm
+    // Default values
+    document.getElementById('edit-severity').value = 'Low';
     
     document.querySelectorAll('.status-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.status === 'Open'); // Changed default for new to Open
+      b.classList.toggle('active', b.dataset.status === 'Resolved');
     });
 
     await App.navigate('editor');
@@ -126,8 +127,6 @@ const Editor = {
     document.querySelectorAll('.status-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.status === inc.status);
     });
-
-    this.currentMedia = (await DB.getMediaForIncident(inc.id)) || [];
     this.renderMediaPreview();
 
     await App.navigate('editor');
@@ -157,11 +156,39 @@ const Editor = {
     const zoneSelect = document.getElementById('edit-zone');
     const oldZone = zoneSelect.value;
     zoneSelect.innerHTML = '<option value="">Select...</option>';
-    const zones = await DB.getZones();
-    zones.sort((a,b) => a.order - b.order).forEach(zone => {
+    const zones = (await DB.getZones()).sort((a,b) => a.order - b.order);
+    
+    const zonesContainer = document.getElementById('quick-zones-container');
+    zonesContainer.innerHTML = '';
+
+    zones.forEach(zone => {
+      // Dropdown
       zoneSelect.innerHTML += `<option value="${zone.name}">${zone.name}</option>`;
+      
+      // Button
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-outline btn-xs zone-btn';
+      btn.style.padding = '4px 10px';
+      btn.style.fontSize = '13px';
+      btn.textContent = zone.name;
+      btn.dataset.zone = zone.name;
+      
+      btn.addEventListener('click', () => {
+        zoneSelect.value = zone.name;
+        document.querySelectorAll('.zone-btn').forEach(zb => zb.classList.remove('active'));
+        btn.classList.add('active');
+        // Trigger any potential change events if needed
+      });
+      
+      zonesContainer.appendChild(btn);
     });
-    if (oldZone) zoneSelect.value = oldZone;
+    
+    if (oldZone) {
+      zoneSelect.value = oldZone;
+      const activeBtn = Array.from(document.querySelectorAll('.zone-btn')).find(b => b.dataset.zone === oldZone);
+      if (activeBtn) activeBtn.classList.add('active');
+    }
 
     // Quick Tags
     const tagsContainer = document.getElementById('quick-tags-container');
