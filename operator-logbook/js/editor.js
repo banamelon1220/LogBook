@@ -147,10 +147,41 @@ const Editor = {
     const eqSelect = document.getElementById('edit-equipment');
     const oldEq = eqSelect.value;
     eqSelect.innerHTML = '<option value="">Select...</option>';
+    
+    const eqContainer = document.getElementById('quick-equipment-container');
+    eqContainer.innerHTML = '';
+
     (settings.equipmentTypes || []).forEach(type => {
       eqSelect.innerHTML += `<option value="${type}">${type}</option>`;
+
+      // Button for mobile
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-outline btn-xs eq-btn';
+      btn.style.padding = '4px 10px';
+      btn.style.fontSize = '13px';
+      btn.textContent = type;
+      btn.dataset.type = type;
+      
+      btn.addEventListener('click', () => {
+        eqSelect.value = type;
+        document.querySelectorAll('.eq-btn').forEach(eb => eb.classList.remove('active'));
+        btn.classList.add('active');
+      });
+      eqContainer.appendChild(btn);
     });
-    if (oldEq) eqSelect.value = oldEq;
+
+    if (oldEq) {
+      eqSelect.value = oldEq;
+      const activeBtn = Array.from(document.querySelectorAll('.eq-btn')).find(b => b.dataset.type === oldEq);
+      if (activeBtn) activeBtn.classList.add('active');
+    } else if (eqSelect.options.length > 1) {
+      // Default to first option
+      eqSelect.selectedIndex = 1;
+      const firstType = eqSelect.options[1].value;
+      const activeBtn = Array.from(document.querySelectorAll('.eq-btn')).find(b => b.dataset.type === firstType);
+      if (activeBtn) activeBtn.classList.add('active');
+    }
 
     // Zones
     const zoneSelect = document.getElementById('edit-zone');
@@ -178,7 +209,6 @@ const Editor = {
         zoneSelect.value = zone.name;
         document.querySelectorAll('.zone-btn').forEach(zb => zb.classList.remove('active'));
         btn.classList.add('active');
-        // Trigger any potential change events if needed
       });
       
       zonesContainer.appendChild(btn);
@@ -187,6 +217,12 @@ const Editor = {
     if (oldZone) {
       zoneSelect.value = oldZone;
       const activeBtn = Array.from(document.querySelectorAll('.zone-btn')).find(b => b.dataset.zone === oldZone);
+      if (activeBtn) activeBtn.classList.add('active');
+    } else if (zoneSelect.options.length > 1) {
+      // Default to first option
+      zoneSelect.selectedIndex = 1;
+      const firstZone = zoneSelect.options[1].value;
+      const activeBtn = Array.from(document.querySelectorAll('.zone-btn')).find(b => b.dataset.zone === firstZone);
       if (activeBtn) activeBtn.classList.add('active');
     }
 

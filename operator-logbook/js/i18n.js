@@ -80,7 +80,7 @@ const I18n = {
       'zones.floorPlanTitle': 'Factory Floor Plan',
       'zones.floorPlanDesc': 'Upload a map and drop pins to help operators locate issues quickly.',
       'zones.uploadPlan': 'Upload Image',
-      'zones.clickToPin': 'Click on the image to place a new zone pin.',
+      'zones.clickToPin': 'Click and drag to select a zone area.',
 
       'settings.title': 'Settings',
       'settings.profile': 'Profile',
@@ -207,7 +207,7 @@ const I18n = {
       'zones.floorPlanTitle': '互動式工廠平面圖設定',
       'zones.floorPlanDesc': '上傳工廠的平面圖後，點擊地圖即可在此處放上對應的分區座標點！',
       'zones.uploadPlan': '上傳圖片',
-      'zones.clickToPin': '點擊下方平面圖的任何位置即可新增該處的標記點',
+      'zones.clickToPin': '點擊並拖曳以選取分區範圍',
 
       'settings.title': '設定',
       'settings.profile': '個人資料',

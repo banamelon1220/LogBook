@@ -74,13 +74,67 @@ const Zones = {
       reader.readAsDataURL(file);
     });
 
-    document.getElementById('admin-map-wrapper').addEventListener('click', (e) => {
-      if (e.target.closest('.map-pin')) return;
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-      this.pendingX = x;
-      this.pendingY = y;
+    const mapWrapper = document.getElementById('admin-map-wrapper');
+    const selectionBox = document.getElementById('selection-box');
+    let isDrawing = false;
+    let startX, startY;
+
+    mapWrapper.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.map-pin') || e.target.closest('.zone-rect')) return;
+      isDrawing = true;
+      const rect = mapWrapper.getBoundingClientRect();
+      startX = e.clientX - rect.left;
+      startY = e.clientY - rect.top;
+
+      selectionBox.style.left = startX + 'px';
+      selectionBox.style.top = startY + 'px';
+      selectionBox.style.width = '0px';
+      selectionBox.style.height = '0px';
+      selectionBox.style.display = 'block';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDrawing) return;
+      const rect = mapWrapper.getBoundingClientRect();
+      const currentX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const currentY = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+
+      const left = Math.min(startX, currentX);
+      const top = Math.min(startY, currentY);
+      const width = Math.abs(currentX - startX);
+      const height = Math.abs(currentY - startY);
+
+      selectionBox.style.left = left + 'px';
+      selectionBox.style.top = top + 'px';
+      selectionBox.style.width = width + 'px';
+      selectionBox.style.height = height + 'px';
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (!isDrawing) return;
+      isDrawing = false;
+      const rect = mapWrapper.getBoundingClientRect();
+      
+      const boxLeft = parseInt(selectionBox.style.left);
+      const boxTop = parseInt(selectionBox.style.top);
+      const boxWidth = parseInt(selectionBox.style.width);
+      const boxHeight = parseInt(selectionBox.style.height);
+
+      selectionBox.style.display = 'none';
+
+      // if box is too small, treat as a point click (min 10px)
+      if (boxWidth < 10 && boxHeight < 10) {
+        this.pendingX = (boxLeft / rect.width) * 100;
+        this.pendingY = (boxTop / rect.height) * 100;
+        this.pendingW = 5; // Default width
+        this.pendingH = 5; // Default height
+      } else {
+        this.pendingX = (boxLeft / rect.width) * 100;
+        this.pendingY = (boxTop / rect.height) * 100;
+        this.pendingW = (boxWidth / rect.width) * 100;
+        this.pendingH = (boxHeight / rect.height) * 100;
+      }
+
       this.openModal(null);
     });
   },
@@ -95,6 +149,8 @@ const Zones = {
     if (zone) {
       this.pendingX = zone.x;
       this.pendingY = zone.y;
+      this.pendingW = zone.w || 5;
+      this.pendingH = zone.h || 5;
     }
 
     document.getElementById('zone-modal').style.display = 'flex';
@@ -118,17 +174,31 @@ const Zones = {
       img.src = planBase64;
       zones.forEach(z => {
         if (z.x != null && z.y != null) {
-          const pin = document.createElement('div');
-          pin.className = 'map-pin';
-          pin.style.left = z.x + '%';
-          pin.style.top = z.y + '%';
-          pin.style.backgroundColor = z.color;
-          pin.innerHTML = `<span class="map-pin-label">${this.escape(z.name)}</span>`;
-          pin.addEventListener('click', (e) => {
+          const isRect = z.w != null && z.h != null;
+          const el = document.createElement('div');
+          
+          if (isRect) {
+            el.className = 'zone-rect';
+            el.style.left = z.x + '%';
+            el.style.top = z.y + '%';
+            el.style.width = z.w + '%';
+            el.style.height = z.h + '%';
+            el.style.borderColor = z.color;
+            el.style.background = z.color + '20'; // 20 hex for low opacity
+            el.innerHTML = `<span class="zone-rect-label">${this.escape(z.name)}</span>`;
+          } else {
+            el.className = 'map-pin';
+            el.style.left = z.x + '%';
+            el.style.top = z.y + '%';
+            el.style.backgroundColor = z.color;
+            el.innerHTML = `<span class="map-pin-label">${this.escape(z.name)}</span>`;
+          }
+
+          el.addEventListener('click', (e) => {
             e.stopPropagation();
             this.openModal(z);
           });
-          pinContainer.appendChild(pin);
+          pinContainer.appendChild(el);
         }
       });
     } else {
@@ -177,6 +247,8 @@ const Zones = {
     if (this.pendingX != null && this.pendingY != null) {
       data.x = this.pendingX;
       data.y = this.pendingY;
+      data.w = this.pendingW || 5;
+      data.h = this.pendingH || 5;
     }
 
     if (this.activeId) {
@@ -188,6 +260,8 @@ const Zones = {
     document.getElementById('zone-modal').style.display = 'none';
     this.pendingX = null;
     this.pendingY = null;
+    this.pendingW = null;
+    this.pendingH = null;
     await this.refresh();
     App.toast(I18n.t('zones.saved'), 'success');
   },
