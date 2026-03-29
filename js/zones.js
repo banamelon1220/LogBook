@@ -40,8 +40,8 @@ const Zones = {
         return;
       }
 
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        App.toast(I18n.t('zones.fileTooLarge') || 'File is too large (max 5MB).', 'error');
+      if (file.size > 0.9 * 1024 * 1024) { // 0.9MB limit for Firestore
+        App.toast(I18n.t('zones.fileTooLarge') || 'File is too large for free tier (max 0.9MB). Please compress.', 'error');
         return;
       }
 

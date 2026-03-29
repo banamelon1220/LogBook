@@ -196,21 +196,27 @@ const DB = {
     await firestore.collection('zones').doc(id).delete();
   },
 
-  // --- Floor Plan ---
   async getFloorPlan() {
     const doc = await firestore.collection('settings').doc('general').get();
-    if (doc.exists && doc.data().floorPlanUrl) {
-      return doc.data().floorPlanUrl;
+    if (doc.exists) {
+      const data = doc.data();
+      // Prioritize Base64 to avoid Storage issues, fall back to URL if exists
+      return data.floorPlanBase64 || data.floorPlanUrl || null;
     }
     return null;
   },
 
   async saveFloorPlan(base64Image) {
     if (base64Image) {
-      const url = await this._uploadBase64('floorplan/current_map.jpg', base64Image);
-      await firestore.collection('settings').doc('general').set({ floorPlanUrl: url }, { merge: true });
+      // Direct Firestore storage to bypass Blaze plan requirements
+      await firestore.collection('settings').doc('general').set({ 
+        floorPlanBase64: base64Image,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
     } else {
-      await firestore.collection('settings').doc('general').set({ floorPlanUrl: null }, { merge: true });
+      await firestore.collection('settings').doc('general').set({ 
+        floorPlanBase64: null 
+      }, { merge: true });
     }
   },
 
