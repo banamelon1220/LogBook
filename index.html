@@ -313,6 +313,9 @@
               <select id="edit-equipment" required>
                 <option value="">Select...</option>
               </select>
+              <div id="quick-equipment-container" class="quick-tags-list" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+                <!-- Equipment buttons will be injected here -->
+              </div>
             </div>
           </div>
 
@@ -396,6 +399,7 @@
             <img id="admin-floorplan-img" style="width:100%;display:block;opacity:0.6" alt="Floor Plan Setup">
             <p style="text-align:center; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; font-weight:bold" data-i18n="zones.clickToPin">Click on the image to place a new zone pin.</p>
             <div id="admin-pins-container"></div>
+            <div id="selection-box" style="display:none; position:absolute; border:2px solid var(--accent); background:rgba(14, 165, 233, 0.2); pointer-events:none; z-index:100;"></div>
           </div>
         </div>
 

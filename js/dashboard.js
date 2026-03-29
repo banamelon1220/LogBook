@@ -42,16 +42,32 @@ const Dashboard = {
       if (z.x != null && z.y != null) {
         // Find if this zone has open issues
         const openIssuesCount = allIncidents.filter(i => i.zone === z.name && i.status === 'Open').length;
+        const isRect = z.w != null && z.h != null;
 
-        const pin = document.createElement('div');
-        pin.className = `map-pin ${openIssuesCount > 0 ? 'has-open' : 'is-ok'}`;
-        pin.style.left = z.x + '%';
-        pin.style.top = z.y + '%';
+        const el = document.createElement('div');
         
-        let hintText = openIssuesCount > 0 ? `${openIssuesCount} OPEN` : 'OK';
-        pin.innerHTML = `<span class="map-pin-label">${this.escape(z.name)} - ${hintText}</span>`;
+        if (isRect) {
+          el.className = `zone-rect ${openIssuesCount > 0 ? 'has-open' : ''}`;
+          el.style.left = z.x + '%';
+          el.style.top = z.y + '%';
+          el.style.width = z.w + '%';
+          el.style.height = z.h + '%';
+          el.style.borderColor = z.color;
+          el.style.background = z.color + '15'; // Very low opacity
+          
+          let hintText = openIssuesCount > 0 ? `${openIssuesCount} OPEN` : 'OK';
+          el.innerHTML = `<span class="zone-rect-label">${this.escape(z.name)} - ${hintText}</span>`;
+        } else {
+          el.className = `map-pin ${openIssuesCount > 0 ? 'has-open' : 'is-ok'}`;
+          el.style.left = z.x + '%';
+          el.style.top = z.y + '%';
+          el.style.backgroundColor = z.color;
+          
+          let hintText = openIssuesCount > 0 ? `${openIssuesCount} OPEN` : 'OK';
+          el.innerHTML = `<span class="map-pin-label">${this.escape(z.name)} - ${hintText}</span>`;
+        }
 
-        pin.addEventListener('click', async () => {
+        el.addEventListener('click', async () => {
           if (openIssuesCount > 0) {
             // View open issues
             document.getElementById('filter-zone').value = z.name;
@@ -60,11 +76,16 @@ const Dashboard = {
           } else {
             // Add new incident in this zone
             await Editor.openNew();
-            document.getElementById('edit-zone').value = z.name;
+            const zoneSelect = document.getElementById('edit-zone');
+            zoneSelect.value = z.name;
+            // Also update the quick-zone buttons
+            document.querySelectorAll('.zone-btn').forEach(btn => {
+              btn.classList.toggle('active', btn.dataset.zone === z.name);
+            });
           }
         });
 
-        pins.appendChild(pin);
+        pins.appendChild(el);
       }
     });
   },
