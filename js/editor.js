@@ -6,6 +6,7 @@ const Editor = {
 
   init() {
     this.bindEvents();
+    this.initDateTimeSelectors();
   },
 
   bindEvents() {
@@ -39,10 +40,44 @@ const Editor = {
       });
     });
 
+    // Count Buttons (+/-)
+    document.getElementById('btn-count-plus').addEventListener('click', () => {
+      const el = document.getElementById('edit-count');
+      el.value = parseInt(el.value) + 1;
+    });
+    document.getElementById('btn-count-minus').addEventListener('click', () => {
+      const el = document.getElementById('edit-count');
+      const val = parseInt(el.value);
+      if (val > 1) el.value = val - 1;
+    });
+
     // Save
     document.getElementById('btn-save-incident').addEventListener('click', async () => await this.save());
     document.getElementById('btn-save-and-more').addEventListener('click', async () => await this.save(false));
     document.getElementById('btn-cancel-edit').addEventListener('click', async () => await App.navigate('table'));
+  },
+
+  initDateTimeSelectors() {
+    const daySelect = document.getElementById('split-day');
+    const hourSelect = document.getElementById('split-hour');
+    const minSelect = document.getElementById('split-min');
+
+    if (!daySelect) return;
+
+    daySelect.innerHTML = '';
+    for (let i = 1; i <= 31; i++) {
+      daySelect.innerHTML += `<option value="${i}">${i}</option>`;
+    }
+    hourSelect.innerHTML = '';
+    for (let i = 0; i <= 23; i++) {
+        const val = i.toString().padStart(2, '0');
+        hourSelect.innerHTML += `<option value="${val}">${val}</option>`;
+    }
+    minSelect.innerHTML = '';
+    for (let i = 0; i < 60; i += 5) { // 5-min intervals for easier selection
+        const val = i.toString().padStart(2, '0');
+        minSelect.innerHTML += `<option value="${val}">${val}</option>`;
+    }
   },
 
   handleFiles(files) {
@@ -96,12 +131,11 @@ const Editor = {
     document.getElementById('editor-title').textContent = I18n.t('editor.newTitle');
 
     const now = new Date();
-    const tzOffsetMs = now.getTimezoneOffset() * 60000;
-    const localISO = new Date(now - tzOffsetMs).toISOString().slice(0,16);
-    document.getElementById('edit-timestamp').value = localISO;
+    this.setDateTimeFields(now);
 
     // Default values
     document.getElementById('edit-severity').value = 'Low';
+    document.getElementById('edit-count').value = '1';
     
     document.querySelectorAll('.status-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.status === 'Resolved');
@@ -118,9 +152,14 @@ const Editor = {
     document.getElementById('editor-title').textContent = I18n.t('editor.editTitle');
     document.getElementById('edit-id').value = inc.id;
     document.getElementById('edit-timestamp').value = inc.timestamp;
+    
+    const dateObj = new Date(inc.timestamp);
+    this.setDateTimeFields(dateObj);
+
     document.getElementById('edit-equipment').value = inc.equipmentType || '';
     document.getElementById('edit-zone').value = inc.zone || '';
     document.getElementById('edit-severity').value = inc.severity || '';
+    document.getElementById('edit-count').value = inc.count || '1';
     document.getElementById('edit-description').value = inc.description || '';
     document.getElementById('edit-tags').value = (inc.tags || []).join(', ');
 
@@ -132,6 +171,33 @@ const Editor = {
     await App.navigate('editor');
   },
 
+  setDateTimeFields(dateObj) {
+    // Hidden timestamp
+    const tzOffsetMs = dateObj.getTimezoneOffset() * 60000;
+    const localISO = new Date(dateObj - tzOffsetMs).toISOString().slice(0,16);
+    document.getElementById('edit-timestamp').value = localISO;
+    
+    // Split fields
+    document.getElementById('split-day').value = dateObj.getDate();
+    document.getElementById('split-hour').value = dateObj.getHours().toString().padStart(2, '0');
+    
+    // Nearest 5-min
+    const mins = Math.round(dateObj.getMinutes() / 5) * 5;
+    const minVal = (mins >= 60 ? 55 : mins).toString().padStart(2, '0');
+    document.getElementById('split-min').value = minVal;
+  },
+
+  getTimestampFromFields() {
+    const now = new Date();
+    const day = document.getElementById('split-day').value;
+    const hour = document.getElementById('split-hour').value;
+    const min = document.getElementById('split-min').value;
+    
+    const constructed = new Date(now.getFullYear(), now.getMonth(), day, hour, min);
+    const tzOffsetMs = constructed.getTimezoneOffset() * 60000;
+    return new Date(constructed - tzOffsetMs).toISOString().slice(0,16);
+  },
+
   async resetForm() {
     document.getElementById('incident-form').reset();
     document.getElementById('edit-id').value = '';
@@ -140,7 +206,7 @@ const Editor = {
     });
     this.renderMediaPreview();
 
-    // Load Dynamic Settings (Equipment & Zones & Quick Tags)
+    // Load Dynamic Settings
     const settings = await DB.getSettings();
     
     // Equipment
@@ -153,16 +219,11 @@ const Editor = {
 
     (settings.equipmentTypes || []).forEach(type => {
       eqSelect.innerHTML += `<option value="${type}">${type}</option>`;
-
-      // Button for mobile
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn btn-outline btn-xs eq-btn';
-      btn.style.padding = '4px 10px';
-      btn.style.fontSize = '13px';
       btn.textContent = type;
       btn.dataset.type = type;
-      
       btn.addEventListener('click', () => {
         eqSelect.value = type;
         document.querySelectorAll('.eq-btn').forEach(eb => eb.classList.remove('active'));
@@ -171,61 +232,27 @@ const Editor = {
       eqContainer.appendChild(btn);
     });
 
-    if (oldEq) {
-      eqSelect.value = oldEq;
-      const activeBtn = Array.from(document.querySelectorAll('.eq-btn')).find(b => b.dataset.type === oldEq);
-      if (activeBtn) activeBtn.classList.add('active');
-    } else if (eqSelect.options.length > 1) {
-      // Default to first option
-      eqSelect.selectedIndex = 1;
-      const firstType = eqSelect.options[1].value;
-      const activeBtn = Array.from(document.querySelectorAll('.eq-btn')).find(b => b.dataset.type === firstType);
-      if (activeBtn) activeBtn.classList.add('active');
-    }
-
     // Zones
     const zoneSelect = document.getElementById('edit-zone');
-    const oldZone = zoneSelect.value;
     zoneSelect.innerHTML = '<option value="">Select...</option>';
     const zones = (await DB.getZones()).sort((a,b) => a.order - b.order);
-    
     const zonesContainer = document.getElementById('quick-zones-container');
     zonesContainer.innerHTML = '';
-
     zones.forEach(zone => {
-      // Dropdown
       zoneSelect.innerHTML += `<option value="${zone.name}">${zone.name}</option>`;
-      
-      // Button
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn btn-outline btn-xs zone-btn';
-      btn.style.padding = '4px 10px';
-      btn.style.fontSize = '13px';
       btn.textContent = zone.name;
       btn.dataset.zone = zone.name;
-      
       btn.addEventListener('click', () => {
         zoneSelect.value = zone.name;
         document.querySelectorAll('.zone-btn').forEach(zb => zb.classList.remove('active'));
         btn.classList.add('active');
       });
-      
       zonesContainer.appendChild(btn);
     });
     
-    if (oldZone) {
-      zoneSelect.value = oldZone;
-      const activeBtn = Array.from(document.querySelectorAll('.zone-btn')).find(b => b.dataset.zone === oldZone);
-      if (activeBtn) activeBtn.classList.add('active');
-    } else if (zoneSelect.options.length > 1) {
-      // Default to first option
-      zoneSelect.selectedIndex = 1;
-      const firstZone = zoneSelect.options[1].value;
-      const activeBtn = Array.from(document.querySelectorAll('.zone-btn')).find(b => b.dataset.zone === firstZone);
-      if (activeBtn) activeBtn.classList.add('active');
-    }
-
     // Quick Tags
     const tagsContainer = document.getElementById('quick-tags-container');
     tagsContainer.innerHTML = '';
@@ -233,8 +260,6 @@ const Editor = {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn btn-outline btn-xs';
-      btn.style.padding = '2px 8px';
-      btn.style.fontSize = '12px';
       btn.textContent = tag;
       btn.addEventListener('click', () => {
         const input = document.getElementById('edit-tags');
@@ -246,13 +271,33 @@ const Editor = {
       });
       tagsContainer.appendChild(btn);
     });
+
+    // Quick Note Buttons (Details)
+    const notesContainer = document.getElementById('quick-notes-container');
+    notesContainer.innerHTML = '';
+    (settings.quickNotes || []).forEach(note => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-outline btn-sm';
+      btn.textContent = note;
+      btn.addEventListener('click', () => {
+        const textarea = document.getElementById('edit-description');
+        const current = textarea.value.trim();
+        textarea.value = current ? `${current} - ${note}` : note;
+        textarea.focus();
+      });
+      notesContainer.appendChild(btn);
+    });
   },
 
   async save(shouldRedirect = true) {
     const id = document.getElementById('edit-id').value;
     const activeStatusBtn = document.querySelector('.status-btn.active');
 
-    const req = ['edit-timestamp', 'edit-equipment', 'edit-zone', 'edit-severity'];
+    // Combine split fields
+    const ts = this.getTimestampFromFields();
+
+    const req = ['edit-equipment', 'edit-zone', 'edit-severity'];
     for(let f of req) {
       if(!document.getElementById(f).value) {
         App.toast(I18n.t('editor.fillRequired'), 'error');
@@ -266,13 +311,15 @@ const Editor = {
 
     try {
       const desc = document.getElementById('edit-description').value;
+      const count = document.getElementById('edit-count').value;
       const autoTitle = desc ? (desc.length > 20 ? desc.substring(0, 20) + '...' : desc) : 'Issue in ' + document.getElementById('edit-zone').value;
 
       const data = {
-        timestamp: document.getElementById('edit-timestamp').value,
+        timestamp: ts,
         equipmentType: document.getElementById('edit-equipment').value,
         zone: document.getElementById('edit-zone').value,
         severity: document.getElementById('edit-severity').value,
+        count: count,
         title: autoTitle,
         description: desc,
         tags: document.getElementById('edit-tags').value.split(',').map(t => t.trim()).filter(t => t),
@@ -292,26 +339,18 @@ const Editor = {
       const savedMedia = await DB.getMediaForIncident(incidentId);
       const currentIds = this.currentMedia.map(m => m.id);
 
-      // Sync Medias
       for (const sm of savedMedia) {
-        if (!currentIds.includes(sm.id)) {
-          await DB.removeMediaItem(incidentId, sm.id);
-        }
+        if (!currentIds.includes(sm.id)) await DB.removeMediaItem(incidentId, sm.id);
       }
-
       for (const m of this.currentMedia) {
-        if (m.dataUrl.startsWith('data:')) {
-          await DB.addMediaItem(incidentId, m);
-        }
+        if (m.dataUrl.startsWith('data:')) await DB.addMediaItem(incidentId, m);
       }
 
       App.toast(I18n.t('editor.saved'), 'success');
       
-      if (shouldRedirect) {
-        await App.navigate('dashboard');
-      } else {
-        await this.openNew();
-      }
+      if (shouldRedirect) await App.navigate('dashboard');
+      else await this.openNew();
+      
     } finally {
       saveBtn.disabled = false;
       saveBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg><span data-i18n="editor.save">${I18n.t('editor.save') || 'Save'}</span>`;

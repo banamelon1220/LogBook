@@ -1,0 +1,22 @@
+{
+  "name": "Operator Logbook",
+  "short_name": "Logbook",
+  "description": "Factory equipment issue tracker and knowledge base for process operators",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

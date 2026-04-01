@@ -93,11 +93,13 @@ const Admin = {
     document.getElementById('btn-save-admin-settings').addEventListener('click', async () => {
       const typesText = document.getElementById('admin-types-input').value;
       const tagsText = document.getElementById('admin-tags-input').value;
+      const notesText = document.getElementById('admin-notes-input').value;
 
       const equipmentTypes = typesText.split('\n').map(t => t.trim()).filter(t => t);
       const commonTags = tagsText.split('\n').map(t => t.trim()).filter(t => t);
+      const quickNotes = notesText.split('\n').map(t => t.trim()).filter(t => t);
 
-      await DB.updateSettings({ equipmentTypes, commonTags });
+      await DB.updateSettings({ equipmentTypes, commonTags, quickNotes });
       App.toast(I18n.t('admin.settingsSaved'), 'success');
     });
   },
@@ -150,5 +152,6 @@ const Admin = {
     const settings = await DB.getSettings();
     document.getElementById('admin-types-input').value = (settings.equipmentTypes || []).join('\n');
     document.getElementById('admin-tags-input').value = (settings.commonTags || []).join('\n');
+    document.getElementById('admin-notes-input').value = (settings.quickNotes || []).join('\n');
   }
 };

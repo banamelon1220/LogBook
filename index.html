@@ -4,7 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Logbook">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
   <title>Operator Logbook</title>
   <meta name="description" content="Factory equipment issue tracker and knowledge base for process operators">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -305,8 +309,22 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label for="edit-timestamp" data-i18n="editor.dateTime">Date & Time</label>
-              <input type="datetime-local" id="edit-timestamp" required>
+              <label data-i18n="editor.dateTime">Date & Time</label>
+              <div class="split-date-row">
+                <input type="hidden" id="edit-timestamp">
+                <div class="form-group">
+                  <label data-i18n="editor.day">Day</label>
+                  <select id="split-day"></select>
+                </div>
+                <div class="form-group">
+                  <label data-i18n="editor.hour">Hour</label>
+                  <select id="split-hour"></select>
+                </div>
+                <div class="form-group">
+                  <label data-i18n="editor.min">Min</label>
+                  <select id="split-min"></select>
+                </div>
+              </div>
             </div>
             <div class="form-group">
               <label for="edit-equipment" data-i18n="editor.equipmentType">Equipment Type</label>
@@ -329,21 +347,34 @@
                 <!-- Zone buttons will be injected here -->
               </div>
             </div>
-            <div class="form-group">
-              <label for="edit-severity" data-i18n="editor.severity">Severity</label>
-              <select id="edit-severity" required>
-                <option value="">Select...</option>
-                <option value="Low">🟢 Low</option>
-                <option value="Medium">🟡 Medium</option>
-                <option value="High">🟠 High</option>
-                <option value="Critical">🔴 Critical</option>
-              </select>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="edit-severity" data-i18n="editor.severity">Severity</label>
+                <select id="edit-severity" required>
+                  <option value="">Select...</option>
+                  <option value="Low">🟢 Low</option>
+                  <option value="Medium">🟡 Medium</option>
+                  <option value="High">🟠 High</option>
+                  <option value="Critical">🔴 Critical</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="edit-count" data-i18n="editor.count">Occurrences</label>
+                <div class="count-selector">
+                  <button type="button" class="count-btn" id="btn-count-minus">−</button>
+                  <input type="number" id="edit-count" value="1" min="1" readonly>
+                  <button type="button" class="count-btn" id="btn-count-plus">+</button>
+                </div>
+              </div>
             </div>
           </div>
 
           <div class="form-group">
             <label for="edit-description" data-i18n="editor.notes">Notes / Details</label>
             <textarea id="edit-description" rows="5" placeholder="What happened? Include details about the issue..."></textarea>
+            <div id="quick-notes-container" class="quick-tags-list" style="margin-top: 10px;">
+              <!-- Quick note buttons will be injected here -->
+            </div>
           </div>
 
           <div class="form-group">
@@ -520,6 +551,10 @@
             <label for="admin-tags-input" data-i18n="admin.commonTags">Common Tags (one per line)</label>
             <textarea id="admin-tags-input" rows="5" placeholder="motor&#10;belt&#10;..."></textarea>
           </div>
+          <div class="form-group">
+            <label for="admin-notes-input" data-i18n="admin.quickNotes">Quick Note Buttons (one per line)</label>
+            <textarea id="admin-notes-input" rows="5" placeholder="Waiting for maintenance&#10;Sensor fogged up&#10;..."></textarea>
+          </div>
           <button class="btn btn-primary" id="btn-save-admin-settings" data-i18n="admin.saveSettings">Save Configuration</button>
         </div>
 
@@ -635,5 +670,15 @@
   <script src="js/settings.js?v=2"></script>
   <script src="js/admin.js?v=2"></script>
   <script src="js/app.js?v=2"></script>
+  
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker registered', reg))
+          .catch(err => console.error('Service Worker registration failed', err));
+      });
+    }
+  </script>
 </body>
 </html>
