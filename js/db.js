@@ -38,6 +38,20 @@ const DB = {
       this._firstRunPassword = adminPass;
     }
 
+    // Migration: Move existing floorPlanBase64 to a map record
+    const settings = await this.getSettings();
+    if (settings.floorPlanBase64) {
+      const maps = await this.getMaps();
+      if (maps.length === 0) {
+        console.log('Migrating existing floor plan to Maps collection...');
+        await this.addMap('Default Map', settings.floorPlanBase64);
+        // Clear the old field to avoid re-migration
+        await firestore.collection('settings').doc('general').update({
+          floorPlanBase64: firebase.firestore.FieldValue.delete()
+        });
+      }
+    }
+
     // Create default zones if none exist
     const zones = await this.getZones();
     if (zones.length === 0) {
@@ -48,7 +62,6 @@ const DB = {
       ]);
     }
     // Create default settings if none exist
-    const settings = await this.getSettings();
     if (!settings.equipmentTypes || !settings.commonTags) {
       await this.updateSettings({
         equipmentTypes: settings.equipmentTypes || ['Conveyor', 'Sensor', 'PLC', 'Freezer', 'Other'],
@@ -152,10 +165,13 @@ const DB = {
     await this.deleteMediaForIncident(id);
     await firestore.collection('incidents').doc(id).delete();
   },
-
   // --- Zones ---
-  async getZones() {
-    const snap = await firestore.collection('zones').get();
+  async getZones(mapId = null) {
+    let query = firestore.collection('zones');
+    if (mapId) {
+      query = query.where('mapId', '==', mapId);
+    }
+    const snap = await query.get();
     return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 
@@ -196,27 +212,71 @@ const DB = {
     await firestore.collection('zones').doc(id).delete();
   },
 
-  async getFloorPlan() {
-    const doc = await firestore.collection('settings').doc('general').get();
+  // --- Maps ---
+  async getMaps() {
+    const snap = await firestore.collection('maps').orderBy('order', 'asc').get();
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  },
+
+  async addMap(name, base64Image) {
+    const id = this.uuid();
+    const filePath = `maps/${id}.jpg`;
+    const url = await this._uploadBase64(filePath, base64Image);
+    const maps = await this.getMaps();
+    
+    const mapData = {
+      id,
+      name,
+      url,
+      filePath,
+      order: maps.length,
+      createdAt: new Date().toISOString()
+    };
+
+    await firestore.collection('maps').doc(id).set(mapData);
+    return mapData;
+  },
+
+  async updateMap(id, updates) {
+    await firestore.collection('maps').doc(id).update(updates);
+  },
+
+  async deleteMap(id) {
+    const doc = await firestore.collection('maps').doc(id).get();
     if (doc.exists) {
       const data = doc.data();
-      // Prioritize Base64 to avoid Storage issues, fall back to URL if exists
-      return data.floorPlanBase64 || data.floorPlanUrl || null;
+      if (data.filePath) {
+        try {
+          await storage.ref().child(data.filePath).delete();
+        } catch(e) { console.error('Failed deleting map file', e); }
+      }
+      // Unlink zones from this map
+      const zones = await this.getZones(id);
+      const batch = firestore.batch();
+      zones.forEach(z => {
+        batch.update(firestore.collection('zones').doc(z.id), { mapId: null });
+      });
+      await batch.commit();
+
+      await firestore.collection('maps').doc(id).delete();
     }
-    return null;
+  },
+
+  // Deprecated: replaced by Maps collection
+  async getFloorPlan() {
+    const maps = await this.getMaps();
+    return maps.length > 0 ? maps[0].url : null;
   },
 
   async saveFloorPlan(base64Image) {
-    if (base64Image) {
-      // Direct Firestore storage to bypass Blaze plan requirements
-      await firestore.collection('settings').doc('general').set({ 
-        floorPlanBase64: base64Image,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
+    // For backwards compatibility, update the first map or create one
+    const maps = await this.getMaps();
+    if (maps.length > 0) {
+      const filePath = `maps/${maps[0].id}.jpg`;
+      const url = await this._uploadBase64(filePath, base64Image);
+      await this.updateMap(maps[0].id, { url, filePath });
     } else {
-      await firestore.collection('settings').doc('general').set({ 
-        floorPlanBase64: null 
-      }, { merge: true });
+      await this.addMap('Default Map', base64Image);
     }
   },
 

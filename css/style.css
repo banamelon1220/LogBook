@@ -608,6 +608,28 @@ textarea {
 
 .recent-list { display: flex; flex-direction: column; gap: 8px; }
 
+.zone-item:hover {
+  border-color: var(--accent);
+  background: var(--accent-subtle);
+}
+
+.zone-item.active {
+  border-color: var(--accent);
+  background: var(--accent-subtle);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.zone-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  transition: all var(--transition);
+}
+
 .recent-item {
   display: flex;
   align-items: center;

@@ -3,20 +3,49 @@
    ======================================== */
 const Dashboard = {
   charts: {},
+  activeMapId: localStorage.getItem('olb_dash_map_id'),
 
   init() {
     document.getElementById('dash-period').addEventListener('change', () => this.refresh());
+    document.getElementById('dash-map-select').addEventListener('change', (e) => {
+      this.activeMapId = e.target.value;
+      localStorage.setItem('olb_dash_map_id', this.activeMapId);
+      this.refresh();
+    });
   },
 
   async refresh() {
     const period = document.getElementById('dash-period').value;
     const allIncidents = await DB.getIncidents();
     const incidents = this.filterByPeriod(allIncidents, period);
-    const zones = await DB.getZones();
-    const mapBase64 = await DB.getFloorPlan();
+    const maps = await DB.getMaps();
+
+    // Populate Map Selector
+    const mapSelect = document.getElementById('dash-map-select');
+    mapSelect.innerHTML = maps.map(m => `<option value="${m.id}">${this.escape(m.name)}</option>`).join('');
+    
+    if (maps.length > 1) {
+      mapSelect.style.display = 'block';
+    } else {
+      mapSelect.style.display = 'none';
+    }
+
+    // Determine active map
+    if (!this.activeMapId && maps.length > 0) {
+      this.activeMapId = maps[0].id;
+    } else if (this.activeMapId && !maps.find(m => m.id === this.activeMapId)) {
+      this.activeMapId = maps.length > 0 ? maps[0].id : null;
+    }
+    
+    if (this.activeMapId) {
+      mapSelect.value = this.activeMapId;
+    }
+
+    const activeMap = maps.find(m => m.id === this.activeMapId);
+    const zones = activeMap ? await DB.getZones(this.activeMapId) : [];
 
     this.renderStats(incidents, allIncidents);
-    this.renderMap(mapBase64, allIncidents, zones);
+    this.renderMap(activeMap, allIncidents, zones);
     this.renderEquipmentChart(incidents);
     this.renderSeverityChart(incidents);
     this.renderDayChart(incidents);
@@ -24,18 +53,18 @@ const Dashboard = {
     this.renderRecentOpen(allIncidents);
   },
 
-  renderMap(mapBase64, allIncidents, zones) {
+  renderMap(activeMap, allIncidents, zones) {
     const container = document.getElementById('dash-map-container');
     const img = document.getElementById('dash-floorplan-img');
     const pins = document.getElementById('dash-pins-container');
 
-    if (!mapBase64) {
+    if (!activeMap) {
       container.style.display = 'none';
       return;
     }
 
     container.style.display = 'block';
-    img.src = mapBase64;
+    img.src = activeMap.url;
     pins.innerHTML = '';
 
     zones.forEach(z => {
@@ -53,7 +82,7 @@ const Dashboard = {
           el.style.width = z.w + '%';
           el.style.height = z.h + '%';
           el.style.borderColor = z.color;
-          el.style.background = z.color + '15'; // Very low opacity
+          el.style.background = z.color + '15'; 
           
           let hintText = openIssuesCount > 0 ? `${openIssuesCount} OPEN` : 'OK';
           el.innerHTML = `<span class="zone-rect-label">${this.escape(z.name)} - ${hintText}</span>`;
@@ -108,7 +137,6 @@ const Dashboard = {
     const weekCount = allIncidents.filter(i => new Date(i.timestamp) >= weekAgo)
                                  .reduce((sum, i) => sum + parseInt(i.count || 1), 0);
 
-    // Most frequent equipment
     const eqCount = {};
     incidents.forEach(i => {
       const c = parseInt(i.count || 1);
@@ -362,7 +390,6 @@ const Dashboard = {
       </div>
     `).join('');
 
-    // Click to view detail
     container.querySelectorAll('.recent-item').forEach(el => {
       el.addEventListener('click', async () => {
         await App.showDetail(el.dataset.id);

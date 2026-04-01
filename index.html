@@ -142,9 +142,12 @@
 
         <!-- Factory Map (Moved to Top) -->
         <div class="map-card" id="dash-map-container" style="display:none; margin-bottom: 24px;">
-          <div class="map-header">
-            <h3 data-i18n="dashboard.factoryMap">Factory Floor Plan</h3>
-            <span class="text-muted" data-i18n="dashboard.mapHint">Click a zone to view open issues or add a new log.</span>
+          <div class="map-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h3 data-i18n="dashboard.factoryMap">Factory Floor Plan</h3>
+              <span class="text-muted" data-i18n="dashboard.mapHint">Click a zone to view open issues or add a new log.</span>
+            </div>
+            <select id="dash-map-select" class="select-sm" style="min-width:150px; display:none;"></select>
           </div>
           <div class="map-wrapper" id="dash-map-wrapper">
             <img id="dash-floorplan-img" style="width:100%;display:block;border-radius:var(--radius)" alt="Floor Plan">
@@ -428,16 +431,23 @@
         </div>
 
         <!-- Floor Plan Management -->
+        <!-- Maps & Zones Management -->
         <div class="settings-card" style="margin-bottom:24px;">
-          <h3 data-i18n="zones.floorPlanTitle">Factory Floor Plan</h3>
-          <p class="text-muted" data-i18n="zones.floorPlanDesc">Upload a map and drop pins to help operators locate issues quickly.</p>
-          <div class="btn-group" style="margin-bottom:16px;">
-            <button class="btn btn-outline btn-sm" id="btn-upload-plan" data-i18n="zones.uploadPlan">Upload Image</button>
-            <input type="file" id="floorplan-input" accept="image/*" style="display:none">
+          <div class="view-header" style="padding:0; margin-bottom:16px;">
+            <h3 data-i18n="zones.maps">Maps / Areas</h3>
+            <button class="btn btn-primary btn-sm" id="btn-add-map">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span data-i18n="zones.addMap">Add Map</span>
+            </button>
           </div>
-          <div id="admin-map-wrapper" class="map-wrapper" style="display:none; cursor:crosshair; border:2px dashed var(--border);">
+          <div id="maps-list" class="zones-list" style="margin-bottom:24px;"></div>
+          
+          <h3 data-i18n="zones.floorPlanTitle" id="active-map-name-title">Factory Floor Plan</h3>
+          <p class="text-muted" data-i18n="zones.floorPlanDesc">Drop pins to help operators locate issues quickly.</p>
+          
+          <div id="admin-map-wrapper" class="map-wrapper" style="display:none; cursor:crosshair; border:2px dashed var(--border); margin-top:16px;">
             <img id="admin-floorplan-img" style="width:100%;display:block;opacity:0.6" alt="Floor Plan Setup">
-            <p style="text-align:center; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; font-weight:bold" data-i18n="zones.clickToPin">Click on the image to place a new zone pin.</p>
+            <p style="text-align:center; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; font-weight:bold" data-i18n="zones.clickToPin">Click and drag to select a zone area.</p>
             <div id="admin-pins-container"></div>
             <div id="selection-box" style="display:none; position:absolute; border:2px solid var(--accent); background:rgba(14, 165, 233, 0.2); pointer-events:none; z-index:100;"></div>
           </div>
@@ -462,6 +472,33 @@
               </div>
               <div class="modal-actions">
                 <button type="button" class="btn btn-ghost" id="btn-zone-cancel" data-i18n="common.cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" data-i18n="common.save">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Map Modal -->
+        <div id="map-modal" class="modal" style="display:none">
+          <div class="modal-overlay"></div>
+          <div class="modal-content">
+            <h2 id="map-modal-title" data-i18n="zones.addMap">Add Map</h2>
+            <form id="map-form">
+              <input type="hidden" id="map-edit-id">
+              <div class="form-group">
+                <label for="map-name" data-i18n="zones.mapName">Map Name</label>
+                <input type="text" id="map-name" placeholder="e.g. Floor 1, Line A" required>
+              </div>
+              <div class="form-group" id="map-upload-group">
+                <label data-i18n="zones.uploadMapImg">Upload Map Image</label>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-outline btn-sm" id="btn-select-map-file">Select Image</button>
+                  <span id="selected-map-filename" class="text-muted" style="font-size:12px; margin-left:10px;">No file selected</span>
+                  <input type="file" id="map-image-input" accept="image/*" style="display:none">
+                </div>
+              </div>
+              <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" id="btn-map-cancel" data-i18n="common.cancel">Cancel</button>
                 <button type="submit" class="btn btn-primary" data-i18n="common.save">Save</button>
               </div>
             </form>
