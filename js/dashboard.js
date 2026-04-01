@@ -99,20 +99,24 @@ const Dashboard = {
   },
 
   renderStats(incidents, allIncidents) {
-    const openCount = allIncidents.filter(i => i.status === 'Open').length;
+    const totalCount = incidents.reduce((sum, i) => sum + parseInt(i.count || 1), 0);
+    const openCount = allIncidents.filter(i => i.status === 'Open')
+                                 .reduce((sum, i) => sum + parseInt(i.count || 1), 0);
 
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
-    const weekCount = allIncidents.filter(i => new Date(i.timestamp) >= weekAgo).length;
+    const weekCount = allIncidents.filter(i => new Date(i.timestamp) >= weekAgo)
+                                 .reduce((sum, i) => sum + parseInt(i.count || 1), 0);
 
     // Most frequent equipment
     const eqCount = {};
     incidents.forEach(i => {
-      eqCount[i.equipmentType] = (eqCount[i.equipmentType] || 0) + 1;
+      const c = parseInt(i.count || 1);
+      eqCount[i.equipmentType] = (eqCount[i.equipmentType] || 0) + c;
     });
     const topEq = Object.entries(eqCount).sort((a, b) => b[1] - a[1])[0];
 
-    document.getElementById('stat-total-val').textContent = incidents.length;
+    document.getElementById('stat-total-val').textContent = totalCount;
     document.getElementById('stat-open-val').textContent = openCount;
     document.getElementById('stat-week-val').textContent = weekCount;
     document.getElementById('stat-top-val').textContent = topEq ? `${topEq[0]} (${topEq[1]})` : '—';
@@ -120,7 +124,10 @@ const Dashboard = {
 
   renderEquipmentChart(incidents) {
     const types = ['Conveyor', 'Sensor', 'PLC', 'Freezer', 'Other'];
-    const counts = types.map(t => incidents.filter(i => i.equipmentType === t).length);
+    const counts = types.map(t => 
+      incidents.filter(i => i.equipmentType === t)
+               .reduce((sum, i) => sum + parseInt(i.count || 1), 0)
+    );
     const colors = ['#0ea5e9', '#8b5cf6', '#f59e0b', '#06b6d4', '#64748b'];
 
     if (this.charts.equipment) this.charts.equipment.destroy();
@@ -164,7 +171,10 @@ const Dashboard = {
 
   renderSeverityChart(incidents) {
     const levels = ['Low', 'Medium', 'High', 'Critical'];
-    const counts = levels.map(l => incidents.filter(i => i.severity === l).length);
+    const counts = levels.map(l => 
+      incidents.filter(i => i.severity === l)
+               .reduce((sum, i) => sum + parseInt(i.count || 1), 0)
+    );
     const colors = ['#10b981', '#f59e0b', '#f97316', '#ef4444'];
 
     if (this.charts.severity) this.charts.severity.destroy();

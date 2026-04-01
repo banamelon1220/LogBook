@@ -80,7 +80,9 @@ const Zones = {
     let startX, startY;
 
     mapWrapper.addEventListener('mousedown', (e) => {
+      // If clicking existing zone/pin, don't start new drawing
       if (e.target.closest('.map-pin') || e.target.closest('.zone-rect')) return;
+      
       isDrawing = true;
       const rect = mapWrapper.getBoundingClientRect();
       startX = e.clientX - rect.left;
@@ -91,11 +93,16 @@ const Zones = {
       selectionBox.style.width = '0px';
       selectionBox.style.height = '0px';
       selectionBox.style.display = 'block';
+      
+      // Prevent text selection while drawing
+      e.preventDefault();
     });
 
     window.addEventListener('mousemove', (e) => {
       if (!isDrawing) return;
       const rect = mapWrapper.getBoundingClientRect();
+      
+      // Clamp coordinates to map area
       const currentX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
       const currentY = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
 
@@ -115,10 +122,10 @@ const Zones = {
       isDrawing = false;
       const rect = mapWrapper.getBoundingClientRect();
       
-      const boxLeft = parseInt(selectionBox.style.left);
-      const boxTop = parseInt(selectionBox.style.top);
-      const boxWidth = parseInt(selectionBox.style.width);
-      const boxHeight = parseInt(selectionBox.style.height);
+      const boxLeft = parseFloat(selectionBox.style.left);
+      const boxTop = parseFloat(selectionBox.style.top);
+      const boxWidth = parseFloat(selectionBox.style.width);
+      const boxHeight = parseFloat(selectionBox.style.height);
 
       selectionBox.style.display = 'none';
 
@@ -126,8 +133,8 @@ const Zones = {
       if (boxWidth < 10 && boxHeight < 10) {
         this.pendingX = (boxLeft / rect.width) * 100;
         this.pendingY = (boxTop / rect.height) * 100;
-        this.pendingW = 5; // Default width
-        this.pendingH = 5; // Default height
+        this.pendingW = null; // Point pin
+        this.pendingH = null;
       } else {
         this.pendingX = (boxLeft / rect.width) * 100;
         this.pendingY = (boxTop / rect.height) * 100;
@@ -137,6 +144,7 @@ const Zones = {
 
       this.openModal(null);
     });
+
   },
 
   openModal(zone) {

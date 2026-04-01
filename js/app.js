@@ -177,6 +177,7 @@ const App = {
         <div class="detail-meta">
           <span>📅 ${ts}</span>
           <span>🔧 ${Editor.escape(inc.equipmentType)}</span>
+          <span style="font-weight:700; color:var(--accent)">×${inc.count || 1}</span>
           <span>📍 ${Editor.escape(inc.zone || 'None')}</span>
           <span><div class="badge ${sevClass}">${inc.severity}</div></span>
           <span><div class="badge ${stClass}">${inc.status}</div></span>

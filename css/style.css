@@ -1268,25 +1268,42 @@ input[type="color"] {
    ======================================== */
 .split-date-row {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  gap: 6px;
+  align-items: flex-end;
   margin-top: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
 }
 .split-date-row .form-group {
   margin-bottom: 0;
   flex: 1;
+  min-width: 0;
 }
 .split-date-row label {
-  font-size: 0.75rem !important;
+  font-size: 0.7rem !important;
   text-align: center;
   margin-bottom: 2px !important;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 .split-date-row select {
-  padding: 8px 4px !important;
+  padding: 8px 2px !important;
   text-align: center;
   font-weight: 600;
+  font-size: 0.9rem !important;
+  appearance: none; /* Cleaner on mobile */
 }
+
+@media (max-width: 400px) {
+  .split-date-row {
+    gap: 4px;
+  }
+  .split-date-row select {
+    font-size: 0.8rem !important;
+  }
+}
+
 
 .count-selector {
   display: flex;

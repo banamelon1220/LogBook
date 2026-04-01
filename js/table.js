@@ -42,17 +42,18 @@ const TableView = {
     const data = this.getFilteredAndSorted();
     if(data.length === 0) return App.toast('No data to export', 'error');
 
-    let csvContent = 'Date,Equipment,Zone,Severity,Status,Notes\n';
+    let csvContent = 'Date,Equipment,Qty,Zone,Severity,Status,Notes\n';
     
     data.forEach(inc => {
       const d = new Date(inc.timestamp).toLocaleString().replace(/,/g, '');
       const eq = `"${(inc.equipmentType || '').replace(/"/g, '""')}"`;
+      const qty = inc.count || 1;
       const zn = `"${(inc.zone || '').replace(/"/g, '""')}"`;
       const sev = inc.severity;
       const st = inc.status;
       const notes = `"${(inc.description || '').replace(/"/g, '""')}"`;
 
-      csvContent += `${d},${eq},${zn},${sev},${st},${notes}\n`;
+      csvContent += `${d},${eq},${qty},${zn},${sev},${st},${notes}\n`;
     });
 
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -160,6 +161,7 @@ const TableView = {
       tr.innerHTML = `
         <td style="white-space:nowrap">${Dashboard.formatDate(inc.timestamp)}</td>
         <td>${this.escape(inc.equipmentType)}</td>
+        <td style="text-align:center"><strong>x${inc.count || 1}</strong></td>
         <td>${this.escape(inc.zone)}</td>
         <td><strong>${this.escape(inc.title)}</strong></td>
         <td><span class="badge ${sevClass}">${inc.severity}</span></td>

@@ -58,11 +58,26 @@ const Editor = {
   },
 
   initDateTimeSelectors() {
+    const yearSelect = document.getElementById('split-year');
+    const monthSelect = document.getElementById('split-month');
     const daySelect = document.getElementById('split-day');
     const hourSelect = document.getElementById('split-hour');
     const minSelect = document.getElementById('split-min');
 
     if (!daySelect) return;
+
+    // Years (Current +/- 1)
+    const currentYear = new Date().getFullYear();
+    yearSelect.innerHTML = '';
+    for (let i = currentYear - 1; i <= currentYear + 1; i++) {
+        yearSelect.innerHTML += `<option value="${i}">${i}</option>`;
+    }
+
+    // Months
+    monthSelect.innerHTML = '';
+    for (let i = 1; i <= 12; i++) {
+        monthSelect.innerHTML += `<option value="${i}">${i}</option>`;
+    }
 
     daySelect.innerHTML = '';
     for (let i = 1; i <= 31; i++) {
@@ -74,7 +89,7 @@ const Editor = {
         hourSelect.innerHTML += `<option value="${val}">${val}</option>`;
     }
     minSelect.innerHTML = '';
-    for (let i = 0; i < 60; i += 5) { // 5-min intervals for easier selection
+    for (let i = 0; i < 60; i += 5) {
         const val = i.toString().padStart(2, '0');
         minSelect.innerHTML += `<option value="${val}">${val}</option>`;
     }
@@ -172,12 +187,14 @@ const Editor = {
   },
 
   setDateTimeFields(dateObj) {
-    // Hidden timestamp
+    // Hidden timestamp (ISO string for DB, trimmed to min)
     const tzOffsetMs = dateObj.getTimezoneOffset() * 60000;
     const localISO = new Date(dateObj - tzOffsetMs).toISOString().slice(0,16);
     document.getElementById('edit-timestamp').value = localISO;
     
     // Split fields
+    document.getElementById('split-year').value = dateObj.getFullYear();
+    document.getElementById('split-month').value = dateObj.getMonth() + 1;
     document.getElementById('split-day').value = dateObj.getDate();
     document.getElementById('split-hour').value = dateObj.getHours().toString().padStart(2, '0');
     
@@ -188,12 +205,13 @@ const Editor = {
   },
 
   getTimestampFromFields() {
-    const now = new Date();
+    const year = document.getElementById('split-year').value;
+    const month = parseInt(document.getElementById('split-month').value) - 1;
     const day = document.getElementById('split-day').value;
     const hour = document.getElementById('split-hour').value;
     const min = document.getElementById('split-min').value;
     
-    const constructed = new Date(now.getFullYear(), now.getMonth(), day, hour, min);
+    const constructed = new Date(year, month, day, hour, min);
     const tzOffsetMs = constructed.getTimezoneOffset() * 60000;
     return new Date(constructed - tzOffsetMs).toISOString().slice(0,16);
   },

@@ -270,6 +270,7 @@
               <tr>
                 <th class="sortable" data-sort="timestamp" data-i18n="table.date">Date</th>
                 <th class="sortable" data-sort="equipmentType" data-i18n="table.equipment">Equipment</th>
+                <th class="sortable" data-sort="count" data-i18n="table.qty">Qty</th>
                 <th class="sortable" data-sort="zone" data-i18n="table.zone">Zone</th>
                 <th class="sortable" data-sort="description" data-i18n="table.notesCol">Notes</th>
                 <th class="sortable" data-sort="severity" data-i18n="table.severity">Severity</th>
@@ -312,6 +313,14 @@
               <label data-i18n="editor.dateTime">Date & Time</label>
               <div class="split-date-row">
                 <input type="hidden" id="edit-timestamp">
+                <div class="form-group">
+                  <label data-i18n="editor.year">Year</label>
+                  <select id="split-year"></select>
+                </div>
+                <div class="form-group">
+                  <label data-i18n="editor.month">Month</label>
+                  <select id="split-month"></select>
+                </div>
                 <div class="form-group">
                   <label data-i18n="editor.day">Day</label>
                   <select id="split-day"></select>
