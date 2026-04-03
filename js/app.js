@@ -6,15 +6,30 @@ const App = {
   _isMainAppInitialized: false,
 
   async init() {
-    await DB.init();
-    I18n.init();
+    try {
+      await DB.init();
+      I18n.init();
 
-    // Setup Auth Flow
-    const authed = await Auth.init();
-    if (authed) {
-      await this.initMainApp();
-    } else {
+      // Setup Auth Flow
+      const authed = await Auth.init().catch(err => {
+        console.error('Auth init failed:', err);
+        return false;
+      });
+
+      if (authed) {
+        await this.initMainApp();
+      } else {
+        document.getElementById('login-screen').style.display = 'flex';
+      }
+    } catch (err) {
+      console.error('App initialization error:', err);
+      // Fallback: show login screen anyway
       document.getElementById('login-screen').style.display = 'flex';
+      const errEl = document.getElementById('login-error');
+      if (errEl) {
+        errEl.textContent = 'System Initialization Error. Please check your connection.';
+        errEl.style.display = 'block';
+      }
     }
 
     // Login Form
@@ -22,15 +37,23 @@ const App = {
       e.preventDefault();
       const id = document.getElementById('login-userid').value;
       const pass = document.getElementById('login-password').value;
-      const res = await Auth.login(id, pass);
-
-      if (res.success) {
-        document.getElementById('login-screen').style.display = 'none';
-        await this.initMainApp();
-      } else {
-        const err = document.getElementById('login-error');
-        err.textContent = I18n.t(res.error);
-        err.style.display = 'block';
+      
+      try {
+        const res = await Auth.login(id, pass);
+        if (res.success) {
+          document.getElementById('login-screen').style.display = 'none';
+          await this.initMainApp();
+        } else {
+          console.warn('Login failed:', res.error);
+          const err = document.getElementById('login-error');
+          err.textContent = I18n.t(res.error) || 'Invalid User ID or Password';
+          err.style.display = 'block';
+        }
+      } catch (err) {
+        console.error('Critical login error:', err);
+        const errEl = document.getElementById('login-error');
+        errEl.textContent = 'Connection error. Please try again or check Firebase status.';
+        errEl.style.display = 'block';
       }
     });
   },

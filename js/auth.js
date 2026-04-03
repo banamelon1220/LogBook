@@ -30,15 +30,41 @@ const Auth = {
   },
 
   async login(userId, password) {
-    const user = await DB.getUserById(userId);
-    if (!user) return { success: false, error: 'login.error.invalid' };
-
-    // --- 緊急救援：如果你忘記密碼，輸入帳號 'admin' 和密碼 'admin' 就會強迫將密碼重設為 admin 並登入 ---
-    if (userId === 'admin' && password === 'admin') {
-      await DB.updateUser('admin', { password: 'admin' });
-      user.password = 'admin';
+    let user = null;
+    try {
+      user = await DB.getUserById(userId);
+    } catch (err) {
+      console.warn('Login: Failed to fetch user from DB:', err);
     }
 
+    // --- 緊急救援：如果你忘記密碼或帳號不見了，或者資料庫連不上 ---
+    // 輸入帳號 'admin' 和密碼 'admin' 會允許登入 (並嘗試建立/更新)
+    if (userId === 'admin' && password === 'admin') {
+      try {
+        if (!user) {
+          user = await DB.addUser({
+            id: 'admin',
+            displayName: 'Admin (Recovered)',
+            role: 'admin',
+            password: 'admin',
+            createdAt: new Date().toISOString()
+          });
+        } else {
+          await DB.updateUser('admin', { password: 'admin' });
+          user.password = 'admin';
+        }
+      } catch (err) {
+        console.warn('Login: Failed to write admin to DB, using local session.', err);
+        user = {
+          id: 'admin',
+          displayName: 'Admin (Offline/Local)',
+          role: 'admin',
+          password: 'admin'
+        };
+      }
+    }
+
+    if (!user) return { success: false, error: 'login.error.invalid' };
     if (user.password !== password) return { success: false, error: 'login.error.invalid' };
 
     this.currentUser = user;

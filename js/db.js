@@ -23,50 +23,58 @@ const DB = {
 
   // --- Init ---
   async init() {
-    // Create admin if no users exist
-    const users = await this.getUsers();
-    if (users.length === 0) {
-      const adminPass = this.generatePassword();
-      await this.addUser({
-        id: 'admin',
-        displayName: 'Jack',
-        role: 'admin',
-        password: adminPass,
-        createdAt: new Date().toISOString()
-      });
-      // Store the password temporarily in memory to show on first login screen
-      this._firstRunPassword = adminPass;
-    }
+    try {
+      // Create admin if no users exist
+      const users = await this.getUsers();
+      if (users.length === 0) {
+        const adminPass = this.generatePassword();
+        await this.addUser({
+          id: 'admin',
+          displayName: 'Admin (Auto)',
+          role: 'admin',
+          password: adminPass,
+          createdAt: new Date().toISOString()
+        });
+        this._firstRunPassword = adminPass;
+      }
 
-    // Migration: Move existing floorPlanBase64 to a map record
-    const settings = await this.getSettings();
-    if (settings.floorPlanBase64) {
-      const maps = await this.getMaps();
-      if (maps.length === 0) {
-        console.log('Migrating existing floor plan to Maps collection...');
-        await this.addMap('Default Map', settings.floorPlanBase64);
-        // Clear the old field to avoid re-migration
-        await firestore.collection('settings').doc('general').update({
-          floorPlanBase64: firebase.firestore.FieldValue.delete()
+      // Migration: Move existing floorPlanBase64 to a map record
+      const settings = await this.getSettings();
+      if (settings.floorPlanBase64) {
+        try {
+          const maps = await this.getMaps();
+          if (maps.length === 0) {
+            console.log('Migrating existing floor plan to Maps collection...');
+            await this.addMap('Default Map', settings.floorPlanBase64);
+            // Clear the old field to avoid re-migration
+            await firestore.collection('settings').doc('general').set({
+              floorPlanBase64: firebase.firestore.FieldValue.delete()
+            }, { merge: true });
+          }
+        } catch (e) {
+          console.error('Map migration failed:', e);
+        }
+      }
+
+      // Create default zones if none exist
+      const zones = await this.getZones();
+      if (zones.length === 0) {
+        await Promise.all([
+          this.addZone({ id: this.uuid(), name: 'Line A', color: '#0ea5e9', order: 0 }),
+          this.addZone({ id: this.uuid(), name: 'Line B', color: '#f59e0b', order: 1 }),
+          this.addZone({ id: this.uuid(), name: 'Freezer Room', color: '#8b5cf6', order: 2 })
+        ]);
+      }
+      // Create default settings if none exist
+      if (!settings.equipmentTypes || !settings.commonTags) {
+        await this.updateSettings({
+          equipmentTypes: settings.equipmentTypes || ['Conveyor', 'Sensor', 'PLC', 'Freezer', 'Other'],
+          commonTags: settings.commonTags || ['jam', 'motor', 'belt', 'electrical', 'mechanical', 'operator error']
         });
       }
-    }
-
-    // Create default zones if none exist
-    const zones = await this.getZones();
-    if (zones.length === 0) {
-      await Promise.all([
-        this.addZone({ id: this.uuid(), name: 'Line A', color: '#0ea5e9', order: 0 }),
-        this.addZone({ id: this.uuid(), name: 'Line B', color: '#f59e0b', order: 1 }),
-        this.addZone({ id: this.uuid(), name: 'Freezer Room', color: '#8b5cf6', order: 2 })
-      ]);
-    }
-    // Create default settings if none exist
-    if (!settings.equipmentTypes || !settings.commonTags) {
-      await this.updateSettings({
-        equipmentTypes: settings.equipmentTypes || ['Conveyor', 'Sensor', 'PLC', 'Freezer', 'Other'],
-        commonTags: settings.commonTags || ['jam', 'motor', 'belt', 'electrical', 'mechanical', 'operator error']
-      });
+    } catch (err) {
+      console.error('DB init failed:', err);
+      throw err; // Re-throw to be caught by App.init
     }
   },
 
