@@ -7,6 +7,15 @@ const Editor = {
   init() {
     this.bindEvents();
     this.initDateTimeSelectors();
+
+    // Mini map switcher
+    const mapSel = document.getElementById('editor-map-select');
+    if (mapSel) {
+      mapSel.addEventListener('change', (e) => {
+        this._editorMapId = e.target.value;
+        this.renderMiniMap();
+      });
+    }
   },
 
   bindEvents() {
@@ -151,6 +160,29 @@ const Editor = {
     // Default values
     document.getElementById('edit-severity').value = 'Low';
     document.getElementById('edit-count').value = '1';
+
+    // Default equipment to first option
+    const eqSelect = document.getElementById('edit-equipment');
+    if (eqSelect.options.length > 1) {
+      eqSelect.selectedIndex = 1; // skip "Select..."
+      const firstEqBtn = document.querySelector('.eq-btn');
+      if (firstEqBtn) firstEqBtn.classList.add('active');
+    }
+
+    // Default zone to first option
+    const zoneSelect = document.getElementById('edit-zone');
+    if (zoneSelect.options.length > 1) {
+      zoneSelect.selectedIndex = 1;
+      const firstZoneBtn = document.querySelector('.zone-btn');
+      if (firstZoneBtn) firstZoneBtn.classList.add('active');
+    }
+
+    // Default first tag
+    const tagsContainer = document.getElementById('quick-tags-container');
+    const firstTagBtn = tagsContainer?.querySelector('button');
+    if (firstTagBtn) {
+      firstTagBtn.click();
+    }
     
     document.querySelectorAll('.status-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.status === 'Resolved');
@@ -306,6 +338,9 @@ const Editor = {
       });
       notesContainer.appendChild(btn);
     });
+
+    // Render mini map
+    await this.renderMiniMap();
   },
 
   async save(shouldRedirect = true) {
@@ -373,6 +408,74 @@ const Editor = {
       saveBtn.disabled = false;
       saveBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg><span data-i18n="editor.save">${I18n.t('editor.save') || 'Save'}</span>`;
     }
+  },
+
+  async renderMiniMap() {
+    const container = document.getElementById('editor-mini-map');
+    const img = document.getElementById('editor-floorplan-img');
+    const pinsEl = document.getElementById('editor-pins-container');
+    const mapSelect = document.getElementById('editor-map-select');
+    if (!container) return;
+
+    const maps = await DB.getMaps();
+    if (maps.length === 0) {
+      container.style.display = 'none';
+      return;
+    }
+
+    // Populate map selector
+    mapSelect.innerHTML = maps.map(m => `<option value="${m.id}">${this.escape(m.name)}</option>`).join('');
+    if (maps.length <= 1) mapSelect.style.display = 'none';
+    else mapSelect.style.display = 'inline-block';
+
+    // Pick active map
+    if (!this._editorMapId || !maps.find(m => m.id === this._editorMapId)) {
+      this._editorMapId = maps[0].id;
+    }
+    mapSelect.value = this._editorMapId;
+
+    const activeMap = maps.find(m => m.id === this._editorMapId);
+    if (!activeMap) { container.style.display = 'none'; return; }
+
+    container.style.display = 'block';
+    img.src = activeMap.url;
+    pinsEl.innerHTML = '';
+
+    const zones = await DB.getZones(this._editorMapId);
+    const zoneSelect = document.getElementById('edit-zone');
+
+    zones.forEach(z => {
+      if (z.x == null || z.y == null) return;
+      const isRect = z.w != null && z.h != null;
+      const el = document.createElement('div');
+
+      if (isRect) {
+        el.className = 'zone-rect';
+        el.style.left = z.x + '%';
+        el.style.top = z.y + '%';
+        el.style.width = z.w + '%';
+        el.style.height = z.h + '%';
+        el.style.borderColor = z.color;
+        el.style.background = z.color + '20';
+        el.innerHTML = `<span class="zone-rect-label" style="font-size:10px">${this.escape(z.name)}</span>`;
+      } else {
+        el.className = 'map-pin';
+        el.style.left = z.x + '%';
+        el.style.top = z.y + '%';
+        el.style.backgroundColor = z.color;
+        el.innerHTML = `<span class="map-pin-label" style="font-size:10px">${this.escape(z.name)}</span>`;
+      }
+
+      // Click pin to select that zone
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', () => {
+        zoneSelect.value = z.name;
+        document.querySelectorAll('.zone-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.zone === z.name);
+        });
+      });
+      pinsEl.appendChild(el);
+    });
   },
 
   escape(str) {
