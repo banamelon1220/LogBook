@@ -614,6 +614,23 @@
           <button class="btn btn-primary" id="btn-save-admin-settings" data-i18n="admin.saveSettings">Save Configuration</button>
         </div>
 
+        <!-- Data Cleanup -->
+        <div class="settings-card" id="admin-cleanup-section" style="margin-top: 24px;">
+          <h2 style="margin-bottom: 16px; font-size: 1.25rem;">Data Cleanup Tools</h2>
+          <p class="text-muted" style="margin-bottom:12px;">Rename an equipment type across all past incidents (e.g. fixing typos like conveyor/box/sensor to conveyor/box).</p>
+          <div class="form-row">
+            <div class="form-group" style="flex:1">
+              <label>Old Equipment Name</label>
+              <input type="text" id="admin-cleanup-old" placeholder="e.g. conveyor/box/sensor">
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>New Equipment Name</label>
+              <input type="text" id="admin-cleanup-new" placeholder="e.g. conveyor/box">
+            </div>
+          </div>
+          <button class="btn btn-danger" id="btn-batch-rename-eq">Batch Rename</button>
+        </div>
+
         <!-- User Modal -->
         <div id="user-modal" class="modal" style="display:none">
           <div class="modal-overlay"></div>

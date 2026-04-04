@@ -45,7 +45,8 @@ const TableView = {
     let csvContent = 'Date,Equipment,Qty,Zone,Severity,Status,Notes\n';
     
     data.forEach(inc => {
-      const d = new Date(inc.timestamp).toLocaleString().replace(/,/g, '');
+      const locale = I18n.currentLang === 'zh-TW' ? 'zh-TW' : 'en-US';
+      const d = new Date(inc.timestamp).toLocaleString(locale).replace(/,/g, '');
       const eq = `"${(inc.equipmentType || '').replace(/"/g, '""')}"`;
       const qty = inc.count || 1;
       const zn = `"${(inc.zone || '').replace(/"/g, '""')}"`;
@@ -55,6 +56,20 @@ const TableView = {
 
       csvContent += `${d},${eq},${qty},${zn},${sev},${st},${notes}\n`;
     });
+
+    csvContent += '\n--- SUMMARY BY EQUIPMENT ---\n';
+    csvContent += 'Equipment,Total Occurrences\n';
+    
+    const eqSummary = {};
+    data.forEach(inc => {
+      const eqName = inc.equipmentType || 'Other';
+      const qty = parseInt(inc.count || 1);
+      eqSummary[eqName] = (eqSummary[eqName] || 0) + qty;
+    });
+    
+    for (const [eqName, total] of Object.entries(eqSummary).sort((a,b) => b[1] - a[1])) {
+      csvContent += `"${eqName.replace(/"/g, '""')}",${total}\n`;
+    }
 
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

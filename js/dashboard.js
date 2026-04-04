@@ -414,7 +414,9 @@ const Dashboard = {
     const d = new Date(str);
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
-    const ampm = d.getHours() < 12 ? '上午' : '下午';
+    const ampm = d.getHours() < 12 
+      ? (I18n.currentLang === 'zh-TW' ? '上午' : 'AM') 
+      : (I18n.currentLang === 'zh-TW' ? '下午' : 'PM');
     return `${mm}/${dd} ${ampm}`;
   },
 

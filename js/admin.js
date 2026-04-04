@@ -100,7 +100,42 @@ const Admin = {
       const quickNotes = notesText.split('\n').map(t => t.trim()).filter(t => t);
 
       await DB.updateSettings({ equipmentTypes, commonTags, quickNotes });
-      App.toast(I18n.t('admin.settingsSaved'), 'success');
+      App.toast(I18n.t('admin.settingsSaved') || 'Configuration saved', 'success');
+    });
+
+    // Batch Rename Equipment
+    document.getElementById('btn-batch-rename-eq').addEventListener('click', async () => {
+      const oldName = document.getElementById('admin-cleanup-old').value.trim();
+      const newName = document.getElementById('admin-cleanup-new').value.trim();
+      if (!oldName || !newName) {
+        App.toast('Please enter both old and new names', 'error');
+        return;
+      }
+      if (!confirm(`Are you sure you want to rename ALL "${oldName}" incidents to "${newName}"?`)) return;
+
+      const btn = document.getElementById('btn-batch-rename-eq');
+      btn.textContent = 'Processing...';
+      btn.disabled = true;
+
+      try {
+        const incidents = await DB.getIncidents();
+        let changedCount = 0;
+        for (const inc of incidents) {
+          if (inc.equipmentType === oldName) {
+            await DB.updateIncident(inc.id, { equipmentType: newName });
+            changedCount++;
+          }
+        }
+        App.toast(`Successfully updated ${changedCount} incidents.`, 'success');
+        document.getElementById('admin-cleanup-old').value = '';
+        document.getElementById('admin-cleanup-new').value = '';
+      } catch (err) {
+        console.error(err);
+        App.toast('Error during batch operation', 'error');
+      } finally {
+        btn.textContent = 'Batch Rename';
+        btn.disabled = false;
+      }
     });
   },
 
