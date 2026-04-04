@@ -1,4 +1,4 @@
-const CACHE_NAME = 'operator-logbook-v1';
+const CACHE_NAME = 'operator-logbook-v3';
 const ASSETS = [
   './',
   './index.html',
