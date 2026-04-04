@@ -1312,6 +1312,7 @@ input[type="color"] {
 .split-date-row select {
   padding: 8px 2px !important;
   text-align: center;
+  text-align-last: center;
   font-weight: 600;
   font-size: 0.9rem !important;
   appearance: none; /* Cleaner on mobile */

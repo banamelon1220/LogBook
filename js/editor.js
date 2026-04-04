@@ -374,14 +374,21 @@ const Editor = {
         incidentId = inc.id;
       }
 
-      const savedMedia = await DB.getMediaForIncident(incidentId);
+      // ONLY fetch if editing an existing incident
+      const savedMedia = id ? await DB.getMediaForIncident(incidentId) : [];
       const currentIds = this.currentMedia.map(m => m.id);
 
       for (const sm of savedMedia) {
         if (!currentIds.includes(sm.id)) await DB.removeMediaItem(incidentId, sm.id);
       }
       for (const m of this.currentMedia) {
-        if (m.dataUrl.startsWith('data:')) await DB.addMediaItem(incidentId, m);
+        if (m.dataUrl.startsWith('data:')) {
+          try {
+            await DB.addMediaItem(incidentId, m);
+          } catch(err) {
+            console.warn('Offline media upload deferred', err);
+          }
+        }
       }
 
       App.toast(I18n.t('editor.saved'), 'success');

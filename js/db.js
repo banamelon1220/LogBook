@@ -149,14 +149,14 @@ const DB = {
   async addIncident(incident) {
     incident.id = incident.id || this.uuid();
     incident.createdAt = incident.createdAt || new Date().toISOString();
-    await firestore.collection('incidents').doc(incident.id).set(incident);
+    firestore.collection('incidents').doc(incident.id).set(incident).catch(e => console.warn('Offline add', e));
     return incident;
   },
 
   async updateIncident(id, updates) {
     updates.updatedAt = new Date().toISOString();
-    await firestore.collection('incidents').doc(id).update(updates);
-    return this.getIncidentById(id);
+    firestore.collection('incidents').doc(id).update(updates).catch(e => console.warn('Offline update', e));
+    return;
   },
 
   async deleteIncident(id) {
@@ -317,21 +317,25 @@ const DB = {
   },
 
   async addMediaItem(incidentId, fileData) {
-    // fileData = { name, type, dataUrl }
     const mediaId = this.uuid();
     const filePath = `incidents/${incidentId}/${mediaId}_${fileData.name}`;
-    const url = await this._uploadBase64(filePath, fileData.dataUrl);
-    
-    // We store the remote url as 'dataUrl' to maintain backwards compatibility with the UI
+
     const item = {
       id: mediaId,
       name: fileData.name,
       type: fileData.type,
-      dataUrl: url,
+      dataUrl: fileData.dataUrl,
       filePath: filePath
     };
 
-    await firestore.collection('incidents').doc(incidentId).collection('media').doc(mediaId).set(item);
+    // Save to Firestore first (offline cache)
+    firestore.collection('incidents').doc(incidentId).collection('media').doc(mediaId).set(item).catch(e => console.warn('Offline media link', e));
+
+    // Upload in background to avoid blocking the UI offline
+    this._uploadBase64(filePath, fileData.dataUrl).then(url => {
+      firestore.collection('incidents').doc(incidentId).collection('media').doc(mediaId).update({ dataUrl: url });
+    }).catch(e => console.warn('Media upload background fail', e));
+
     return item;
   },
 
