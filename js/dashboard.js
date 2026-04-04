@@ -151,11 +151,23 @@ const Dashboard = {
   },
 
   renderEquipmentChart(incidents) {
-    const types = ['Conveyor', 'Sensor', 'PLC', 'Freezer', 'Other'];
-    const counts = types.map(t => 
-      incidents.filter(i => i.equipmentType === t)
-               .reduce((sum, i) => sum + parseInt(i.count || 1), 0)
-    );
+    const eqCount = {};
+    incidents.forEach(inc => {
+      const type = inc.equipmentType || 'Other';
+      const c = parseInt(inc.count || 1);
+      eqCount[type] = (eqCount[type] || 0) + c;
+    });
+
+    const sortedTypes = Object.entries(eqCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const types = sortedTypes.map(t => t[0]);
+    const counts = sortedTypes.map(t => t[1]);
+    
+    // Fallback if empty
+    if (types.length === 0) {
+      types.push('None');
+      counts.push(0);
+    }
+
     const colors = ['#0ea5e9', '#8b5cf6', '#f59e0b', '#06b6d4', '#64748b'];
 
     if (this.charts.equipment) this.charts.equipment.destroy();
