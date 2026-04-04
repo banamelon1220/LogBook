@@ -412,7 +412,10 @@ const Dashboard = {
   formatDate(str) {
     if (!str) return '';
     const d = new Date(str);
-    return d.toLocaleDateString('en', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const ampm = d.getHours() < 12 ? '上午' : '下午';
+    return `${mm}/${dd} ${ampm}`;
   },
 
   escape(str) {

@@ -70,8 +70,6 @@ const Editor = {
     const yearSelect = document.getElementById('split-year');
     const monthSelect = document.getElementById('split-month');
     const daySelect = document.getElementById('split-day');
-    const hourSelect = document.getElementById('split-hour');
-    const minSelect = document.getElementById('split-min');
 
     if (!daySelect) return;
 
@@ -91,16 +89,6 @@ const Editor = {
     daySelect.innerHTML = '';
     for (let i = 1; i <= 31; i++) {
       daySelect.innerHTML += `<option value="${i}">${i}</option>`;
-    }
-    hourSelect.innerHTML = '';
-    for (let i = 0; i <= 23; i++) {
-        const val = i.toString().padStart(2, '0');
-        hourSelect.innerHTML += `<option value="${val}">${val}</option>`;
-    }
-    minSelect.innerHTML = '';
-    for (let i = 0; i < 60; i += 5) {
-        const val = i.toString().padStart(2, '0');
-        minSelect.innerHTML += `<option value="${val}">${val}</option>`;
     }
   },
 
@@ -156,6 +144,7 @@ const Editor = {
 
     const now = new Date();
     this.setDateTimeFields(now);
+    document.getElementById('split-ampm').value = 'PM';
 
     // Default values
     document.getElementById('edit-severity').value = 'Low';
@@ -228,20 +217,16 @@ const Editor = {
     document.getElementById('split-year').value = dateObj.getFullYear();
     document.getElementById('split-month').value = dateObj.getMonth() + 1;
     document.getElementById('split-day').value = dateObj.getDate();
-    document.getElementById('split-hour').value = dateObj.getHours().toString().padStart(2, '0');
-    
-    // Nearest 5-min
-    const mins = Math.round(dateObj.getMinutes() / 5) * 5;
-    const minVal = (mins >= 60 ? 55 : mins).toString().padStart(2, '0');
-    document.getElementById('split-min').value = minVal;
+    document.getElementById('split-ampm').value = dateObj.getHours() < 12 ? 'AM' : 'PM';
   },
 
   getTimestampFromFields() {
     const year = document.getElementById('split-year').value;
     const month = parseInt(document.getElementById('split-month').value) - 1;
     const day = document.getElementById('split-day').value;
-    const hour = document.getElementById('split-hour').value;
-    const min = document.getElementById('split-min').value;
+    const ampm = document.getElementById('split-ampm').value;
+    const hour = ampm === 'PM' ? 15 : 9;
+    const min = 0;
     
     const constructed = new Date(year, month, day, hour, min);
     const tzOffsetMs = constructed.getTimezoneOffset() * 60000;
