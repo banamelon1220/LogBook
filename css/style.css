@@ -878,6 +878,20 @@ tr:last-child td { border-bottom: none; }
   gap: 4px;
 }
 
+.notes-cell {
+  max-width: 260px;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
 .empty-state {
   text-align: center;
   padding: 60px 20px;
@@ -1310,12 +1324,15 @@ input[type="color"] {
   white-space: nowrap;
 }
 .split-date-row select {
-  padding: 8px 2px !important;
+  padding: 8px 4px !important;
   text-align: center;
   text-align-last: center;
   font-weight: 600;
-  font-size: 0.9rem !important;
-  appearance: none; /* Cleaner on mobile */
+  font-size: 0.85rem !important;
+  appearance: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (max-width: 400px) {

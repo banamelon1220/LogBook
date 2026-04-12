@@ -1,21 +1,22 @@
-const CACHE_NAME = 'operator-logbook-v5';
+const CACHE_NAME = 'operator-logbook-v7';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
-  './js/i18n.js',
-  './js/firebase-config.js',
-  './js/db.js',
-  './js/auth.js',
-  './js/dashboard.js',
-  './js/table.js',
-  './js/editor.js',
-  './js/zones.js',
-  './js/settings.js',
-  './js/admin.js',
-  './js/guide.js',
-  './js/app.js',
-  './icon-512.png'
+  './js/i18n.js?v=3',
+  './js/firebase-config.js?v=3',
+  './js/db.js?v=3',
+  './js/auth.js?v=3',
+  './js/dashboard.js?v=3',
+  './js/table.js?v=3',
+  './js/editor.js?v=3',
+  './js/zones.js?v=3',
+  './js/settings.js?v=3',
+  './js/admin.js?v=3',
+  './js/guide.js?v=3',
+  './js/app.js?v=3',
+  './icon-512.png',
+  './manifest.json'
 ];
 
 // External CDN resources to cache for offline support

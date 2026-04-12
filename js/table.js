@@ -178,7 +178,7 @@ const TableView = {
         <td>${this.escape(inc.equipmentType)}</td>
         <td style="text-align:center"><strong>x${inc.count || 1}</strong></td>
         <td>${this.escape(inc.zone)}</td>
-        <td><strong>${this.escape(inc.title)}</strong></td>
+        <td class="notes-cell">${this.escape(inc.description || inc.title)}</td>
         <td><span class="badge ${sevClass}">${inc.severity}</span></td>
         <td><span class="badge ${stClass}">${I18n.t(inc.status === 'Resolved' ? 'editor.resolved' : 'editor.open') || inc.status}</span></td>
         <td class="table-actions">
