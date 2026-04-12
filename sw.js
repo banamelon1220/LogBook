@@ -1,20 +1,20 @@
-const CACHE_NAME = 'operator-logbook-v7';
+const CACHE_NAME = 'operator-logbook-v8';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
-  './js/i18n.js?v=3',
-  './js/firebase-config.js?v=3',
-  './js/db.js?v=3',
-  './js/auth.js?v=3',
-  './js/dashboard.js?v=3',
-  './js/table.js?v=3',
-  './js/editor.js?v=3',
-  './js/zones.js?v=3',
-  './js/settings.js?v=3',
-  './js/admin.js?v=3',
-  './js/guide.js?v=3',
-  './js/app.js?v=3',
+  './js/i18n.js?v=4',
+  './js/firebase-config.js?v=4',
+  './js/db.js?v=4',
+  './js/auth.js?v=4',
+  './js/dashboard.js?v=4',
+  './js/table.js?v=4',
+  './js/editor.js?v=4',
+  './js/zones.js?v=4',
+  './js/settings.js?v=4',
+  './js/admin.js?v=4',
+  './js/guide.js?v=4',
+  './js/app.js?v=4',
   './icon-512.png',
   './manifest.json'
 ];
@@ -76,9 +76,25 @@ self.addEventListener('fetch', (event) => {
   // Let Firebase SDK handle its own API requests
   if (event.request.url.includes('firestore.googleapis.com') || 
       event.request.url.includes('firebaseio.com') ||
-      event.request.url.includes('firebasestorage.googleapis.com') ||
       event.request.url.includes('identitytoolkit.googleapis.com') ||
       event.request.url.includes('securetoken.googleapis.com')) {
+    return;
+  }
+
+  // Firebase Storage (Maps & Media): Cache-first
+  if (event.request.url.includes('firebasestorage.googleapis.com')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
+      })
+    );
     return;
   }
 
