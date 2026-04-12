@@ -88,6 +88,12 @@
             <span data-i18n="nav.newIncident">New Incident</span>
           </a>
         </li>
+        <li>
+          <a href="#" class="nav-link" data-view="guide">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span data-i18n="nav.guide">Reference Guide</span>
+          </a>
+        </li>
         <li class="nav-divider"></li>
         <li>
           <a href="#" class="nav-link" data-view="zones">
@@ -331,8 +337,8 @@
                 <div class="form-group">
                   <label data-i18n="editor.shift">Shift</label>
                   <select id="split-ampm">
-                    <option value="AM" data-i18n="editor.am">上午 (AM)</option>
-                    <option value="PM" data-i18n="editor.pm">下午 (PM)</option>
+                    <option value="DS" data-i18n="editor.dayShift">Day Shift (DS)</option>
+                    <option value="NS" data-i18n="editor.nightShift">Night Shift (NS)</option>
                   </select>
                 </div>
               </div>
@@ -415,8 +421,8 @@
             </div>
           </div>
 
-          <!-- Media Upload -->
-          <div class="form-group">
+          <!-- Media Upload (Hidden - use Reference Guide instead) -->
+          <div class="form-group" style="display:none">
             <label data-i18n="editor.media">Attachments (Images / Videos)</label>
             <div id="media-dropzone" class="dropzone">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -685,6 +691,75 @@
         </div>
       </section>
 
+      <!-- REFERENCE GUIDE VIEW -->
+      <section id="view-guide" class="view">
+        <div class="view-header">
+          <h1 data-i18n="guide.title">Reference Guide</h1>
+          <div class="view-header-actions">
+            <select id="guide-filter-zone" class="select-sm">
+              <option value="" data-i18n="guide.allCategories">All Categories</option>
+            </select>
+            <button class="btn btn-primary btn-sm" id="btn-add-guide" style="display:none">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span data-i18n="guide.addEntry">Add Entry</span>
+            </button>
+          </div>
+        </div>
+        <div id="guide-grid" class="guide-grid"></div>
+        <div id="guide-empty" class="empty-state" style="display:none">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <p data-i18n="guide.empty">No reference entries yet.</p>
+        </div>
+
+        <!-- Guide Entry Modal -->
+        <div id="guide-modal" class="modal" style="display:none">
+          <div class="modal-overlay"></div>
+          <div class="modal-content" style="max-width:520px">
+            <h2 id="guide-modal-title" data-i18n="guide.addEntry">Add Entry</h2>
+            <form id="guide-form">
+              <input type="hidden" id="guide-edit-id">
+              <div class="form-group">
+                <label for="guide-entry-title" data-i18n="guide.entryTitle">Title</label>
+                <input type="text" id="guide-entry-title" placeholder="e.g. Conveyor Belt Jam at Zone A" required>
+              </div>
+              <div class="form-group">
+                <label for="guide-entry-desc" data-i18n="guide.entryDesc">Description</label>
+                <textarea id="guide-entry-desc" rows="4" placeholder="Describe the common issue, solution, or reference info..."></textarea>
+              </div>
+              <div class="form-group">
+                <label for="guide-entry-zone" data-i18n="guide.entryCategory">Category / Zone</label>
+                <select id="guide-entry-zone">
+                  <option value="">General</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label data-i18n="guide.uploadImage">Upload Image</label>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-outline btn-sm" id="btn-guide-select-img">Select Image</button>
+                  <span id="guide-selected-filename" class="text-muted" style="font-size:12px; margin-left:10px;">No file selected</span>
+                  <input type="file" id="guide-image-input" accept="image/*" style="display:none">
+                </div>
+                <div id="guide-image-preview" style="margin-top:10px;"></div>
+              </div>
+              <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" id="btn-guide-cancel" data-i18n="common.cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" data-i18n="common.save">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Guide Image Lightbox -->
+        <div id="guide-lightbox" class="guide-lightbox" style="display:none">
+          <div class="guide-lightbox-overlay"></div>
+          <div class="guide-lightbox-content">
+            <img id="guide-lightbox-img" src="" alt="Reference">
+            <div id="guide-lightbox-caption" class="guide-lightbox-caption"></div>
+            <button class="guide-lightbox-close" id="btn-guide-lightbox-close">&times;</button>
+          </div>
+        </div>
+      </section>
+
       <!-- INCIDENT DETAIL VIEW -->
       <section id="view-detail" class="view">
         <div class="view-header">
@@ -742,6 +817,7 @@
   <script src="js/zones.js?v=2"></script>
   <script src="js/settings.js?v=2"></script>
   <script src="js/admin.js?v=2"></script>
+  <script src="js/guide.js?v=2"></script>
   <script src="js/app.js?v=2"></script>
   
   <script>

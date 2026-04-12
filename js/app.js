@@ -50,6 +50,7 @@ const App = {
     Zones.init();
     Settings.init();
     Admin.init();
+    Guide.init();
 
     // Render initially
     await this.navigate('dashboard');
@@ -137,6 +138,9 @@ const App = {
     } else if (viewId === 'admin') {
       document.getElementById('mobile-title').textContent = 'User Management';
       await Admin.refresh();
+    } else if (viewId === 'guide') {
+      document.getElementById('mobile-title').textContent = I18n.t('nav.guide');
+      await Guide.refresh();
     }
   },
 

@@ -365,6 +365,72 @@ const DB = {
     }
   },
 
+  // --- Reference Guide ---
+  async getGuides() {
+    const snap = await firestore.collection('guides').orderBy('createdAt', 'desc').get();
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  },
+
+  async addGuide(entry) {
+    const id = this.uuid();
+    let imageUrl = '';
+    let filePath = '';
+
+    if (entry.imageDataUrl) {
+      filePath = `guides/${id}.jpg`;
+      imageUrl = await this._uploadBase64(filePath, entry.imageDataUrl);
+    }
+
+    const data = {
+      id,
+      title: entry.title,
+      description: entry.description || '',
+      category: entry.category || '',
+      imageUrl,
+      filePath,
+      createdAt: new Date().toISOString()
+    };
+
+    await firestore.collection('guides').doc(id).set(data);
+    return data;
+  },
+
+  async updateGuide(id, updates) {
+    if (updates.imageDataUrl) {
+      const filePath = `guides/${id}.jpg`;
+      const imageUrl = await this._uploadBase64(filePath, updates.imageDataUrl);
+      updates.imageUrl = imageUrl;
+      updates.filePath = filePath;
+      delete updates.imageDataUrl;
+    }
+    updates.updatedAt = new Date().toISOString();
+    await firestore.collection('guides').doc(id).update(updates);
+  },
+
+  async deleteGuide(id) {
+    const doc = await firestore.collection('guides').doc(id).get();
+    if (doc.exists) {
+      const data = doc.data();
+      if (data.filePath) {
+        try { await storage.ref().child(data.filePath).delete(); }
+        catch(e) { console.warn('Failed to delete guide image', e); }
+      }
+      await firestore.collection('guides').doc(id).delete();
+    }
+  },
+
+  // When a zone is renamed, update all guide entries using it as category
+  async updateGuideCategoriesForZoneRename(oldName, newName) {
+    const guides = await this.getGuides();
+    const batch = firestore.batch();
+    guides.forEach(g => {
+      if (g.category === oldName) {
+        batch.update(firestore.collection('guides').doc(g.id), { category: newName });
+      }
+    });
+    await batch.commit();
+  },
+
   // --- Export / Import ---
   async exportAll() {
     return JSON.stringify({

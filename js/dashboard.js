@@ -308,38 +308,53 @@ const Dashboard = {
     const labels = [];
     const data = [];
 
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      labels.push(d.toLocaleDateString('en', { month: 'short', day: 'numeric' }));
-      data.push(incidents.filter(inc => inc.timestamp?.startsWith(dateStr)).length);
+    // For longer periods, aggregate by week for clearer display
+    if (days > 30) {
+      // Aggregate by week
+      const weekBuckets = {};
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const weekStart = new Date(d);
+        weekStart.setDate(d.getDate() - d.getDay());
+        const key = weekStart.toISOString().split('T')[0];
+        if (!weekBuckets[key]) weekBuckets[key] = { label: weekStart.toLocaleDateString('en', { month: 'short', day: 'numeric' }), count: 0 };
+        const dateStr = d.toISOString().split('T')[0];
+        weekBuckets[key].count += incidents.filter(inc => inc.timestamp?.startsWith(dateStr))
+                                          .reduce((sum, i) => sum + parseInt(i.count || 1), 0);
+      }
+      Object.values(weekBuckets).forEach(wb => {
+        labels.push(wb.label);
+        data.push(wb.count);
+      });
+    } else {
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        labels.push(d.toLocaleDateString('en', { month: 'short', day: 'numeric' }));
+        data.push(incidents.filter(inc => inc.timestamp?.startsWith(dateStr))
+                           .reduce((sum, i) => sum + parseInt(i.count || 1), 0));
+      }
     }
 
-    const showEvery = Math.max(1, Math.floor(days / 10));
+    const showEvery = Math.max(1, Math.floor(labels.length / 10));
 
     if (this.charts.trend) this.charts.trend.destroy();
 
     const ctx = document.getElementById('chart-trend').getContext('2d');
-    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-    gradient.addColorStop(0, 'rgba(14, 165, 233, 0.2)');
-    gradient.addColorStop(1, 'rgba(14, 165, 233, 0)');
 
     this.charts.trend = new Chart(ctx, {
-      type: 'line',
+      type: 'bar',
       data: {
         labels,
         datasets: [{
           data,
+          backgroundColor: 'rgba(14, 165, 233, 0.3)',
           borderColor: '#0ea5e9',
-          backgroundColor: gradient,
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-          pointHitRadius: 10,
-          pointHoverRadius: 5,
-          pointHoverBackgroundColor: '#0ea5e9',
+          borderWidth: 1.5,
+          borderRadius: 4,
+          barPercentage: days > 30 ? 0.7 : 0.5,
         }]
       },
       options: {
@@ -414,10 +429,11 @@ const Dashboard = {
     const d = new Date(str);
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
-    const ampm = d.getHours() < 12 
-      ? (I18n.currentLang === 'zh-TW' ? '上午' : 'AM') 
-      : (I18n.currentLang === 'zh-TW' ? '下午' : 'PM');
-    return `${mm}/${dd} ${ampm}`;
+    const h = d.getHours();
+    const shift = (h >= 3 && h < 15)
+      ? (I18n.currentLang === 'zh-TW' ? '日班' : 'DS')
+      : (I18n.currentLang === 'zh-TW' ? '夜班' : 'NS');
+    return `${mm}/${dd} ${shift}`;
   },
 
   escape(str) {

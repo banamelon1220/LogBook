@@ -292,6 +292,11 @@ const Zones = {
 
     try {
       if (this.activeId) {
+        // Check if name changed — cascade to guide categories
+        const existingZone = (await DB.getZones()).find(z => z.id === this.activeId);
+        if (existingZone && existingZone.name !== name) {
+          await DB.updateGuideCategoriesForZoneRename(existingZone.name, name);
+        }
         await DB.updateZone(this.activeId, data);
       } else {
         await DB.addZone(data);

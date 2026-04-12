@@ -144,7 +144,7 @@ const Editor = {
 
     const now = new Date();
     this.setDateTimeFields(now);
-    document.getElementById('split-ampm').value = 'PM';
+    document.getElementById('split-ampm').value = 'NS';
 
     // Default values
     document.getElementById('edit-severity').value = 'Low';
@@ -217,7 +217,7 @@ const Editor = {
     document.getElementById('split-year').value = dateObj.getFullYear();
     document.getElementById('split-month').value = dateObj.getMonth() + 1;
     document.getElementById('split-day').value = dateObj.getDate();
-    document.getElementById('split-ampm').value = dateObj.getHours() < 12 ? 'AM' : 'PM';
+    document.getElementById('split-ampm').value = (dateObj.getHours() >= 3 && dateObj.getHours() < 15) ? 'DS' : 'NS';
   },
 
   getTimestampFromFields() {
@@ -225,7 +225,7 @@ const Editor = {
     const month = parseInt(document.getElementById('split-month').value) - 1;
     const day = document.getElementById('split-day').value;
     const ampm = document.getElementById('split-ampm').value;
-    const hour = ampm === 'PM' ? 15 : 9;
+    const hour = ampm === 'NS' ? 21 : 9;
     const min = 0;
     
     const constructed = new Date(year, month, day, hour, min);
