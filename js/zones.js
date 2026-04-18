@@ -129,6 +129,7 @@ const Zones = {
     document.getElementById('zone-modal-title').textContent = zone ? I18n.t('zones.editZone') : I18n.t('zones.addZone');
     document.getElementById('zone-name').value = zone ? zone.name : '';
     document.getElementById('zone-color').value = zone ? zone.color : '#0ea5e9';
+    document.getElementById('zone-sublocations').value = (zone && zone.subLocations) ? zone.subLocations : '';
     
     if (zone) {
       this.pendingX = zone.x;
@@ -276,10 +277,12 @@ const Zones = {
   async save() {
     const name = document.getElementById('zone-name').value;
     const color = document.getElementById('zone-color').value;
+    const subLocations = document.getElementById('zone-sublocations').value;
 
     const data = { 
       name, 
       color,
+      subLocations,
       mapId: this.activeMapId
     };
 

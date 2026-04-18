@@ -182,7 +182,7 @@ const App = {
           <span>📅 ${ts}</span>
           <span>🔧 ${Editor.escape(inc.equipmentType)}</span>
           <span style="font-weight:700; color:var(--accent)">×${inc.count || 1}</span>
-          <span>📍 ${Editor.escape(inc.zone || 'None')}</span>
+          <span>📍 ${Editor.escape(inc.zone || 'None')} ${inc.subLocation ? `<span style="font-size:0.85em; color:var(--text-muted)">(${Editor.escape(inc.subLocation)})</span>` : ''}</span>
           <span><div class="badge ${sevClass}">${inc.severity}</div></span>
           <span><div class="badge ${stClass}">${inc.status}</div></span>
           <span>👤 ${Editor.escape(inc.createdByName || 'Unknown')}</span>

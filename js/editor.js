@@ -49,6 +49,11 @@ const Editor = {
       });
     });
 
+    // Zone change
+    document.getElementById('edit-zone').addEventListener('change', (e) => {
+      this.updateSubLocationsUI(e.target.value);
+    });
+
     // Count Buttons (+/-)
     document.getElementById('btn-count-plus').addEventListener('click', () => {
       const el = document.getElementById('edit-count');
@@ -164,6 +169,7 @@ const Editor = {
       zoneSelect.selectedIndex = 1;
       const firstZoneBtn = document.querySelector('.zone-btn');
       if (firstZoneBtn) firstZoneBtn.classList.add('active');
+      this.updateSubLocationsUI(zoneSelect.value);
     }
 
     // Default first tag
@@ -194,10 +200,13 @@ const Editor = {
 
     document.getElementById('edit-equipment').value = inc.equipmentType || '';
     document.getElementById('edit-zone').value = inc.zone || '';
+    document.getElementById('edit-sublocation').value = inc.subLocation || '';
     document.getElementById('edit-severity').value = inc.severity || '';
     document.getElementById('edit-count').value = inc.count || '1';
     document.getElementById('edit-description').value = inc.description || '';
     document.getElementById('edit-tags').value = (inc.tags || []).join(', ');
+
+    this.updateSubLocationsUI(inc.zone || '');
 
     document.querySelectorAll('.status-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.status === inc.status);
@@ -244,6 +253,16 @@ const Editor = {
     // Load Dynamic Settings
     const settings = await DB.getSettings();
     
+    // Severity Guidance
+    const severityNoteEl = document.getElementById('severity-guidance-note');
+    if (settings.severityNotes && settings.severityNotes.trim()) {
+      severityNoteEl.textContent = settings.severityNotes.trim();
+      severityNoteEl.style.display = 'block';
+    } else {
+      severityNoteEl.style.display = 'none';
+      severityNoteEl.textContent = '';
+    }
+    
     // Equipment
     const eqSelect = document.getElementById('edit-equipment');
     const oldEq = eqSelect.value;
@@ -271,6 +290,7 @@ const Editor = {
     const zoneSelect = document.getElementById('edit-zone');
     zoneSelect.innerHTML = '<option value="">Select...</option>';
     const zones = (await DB.getZones()).sort((a,b) => a.order - b.order);
+    this._cachedZones = zones;
     const zonesContainer = document.getElementById('quick-zones-container');
     zonesContainer.innerHTML = '';
     zones.forEach(zone => {
@@ -284,6 +304,7 @@ const Editor = {
         zoneSelect.value = zone.name;
         document.querySelectorAll('.zone-btn').forEach(zb => zb.classList.remove('active'));
         btn.classList.add('active');
+        this.updateSubLocationsUI(zone.name);
       });
       zonesContainer.appendChild(btn);
     });
@@ -356,6 +377,7 @@ const Editor = {
         timestamp: ts,
         equipmentType: document.getElementById('edit-equipment').value,
         zone: document.getElementById('edit-zone').value,
+        subLocation: document.getElementById('edit-sublocation').value,
         severity: document.getElementById('edit-severity').value,
         count: count,
         title: autoTitle,
@@ -465,9 +487,68 @@ const Editor = {
         document.querySelectorAll('.zone-btn').forEach(b => {
           b.classList.toggle('active', b.dataset.zone === z.name);
         });
+        this.updateSubLocationsUI(z.name);
       });
       pinsEl.appendChild(el);
     });
+  },
+
+  updateSubLocationsUI(zoneName) {
+    const wrapper = document.getElementById('quick-sublocations-wrapper');
+    const container = document.getElementById('quick-sublocations-container');
+    const hiddenInput = document.getElementById('edit-sublocation');
+    container.innerHTML = '';
+
+    const zone = (this._cachedZones || []).find(z => z.name === zoneName);
+    if (!zone || !zone.subLocations || !zone.subLocations.trim()) {
+      wrapper.style.display = 'none';
+      hiddenInput.value = ''; 
+      return;
+    }
+
+    wrapper.style.display = 'block';
+    const subLocs = zone.subLocations.split(',').map(s => s.trim()).filter(s => s);
+    
+    let foundCurrent = false;
+
+    // None default option
+    const noneBtn = document.createElement('button');
+    noneBtn.type = 'button';
+    noneBtn.className = 'btn btn-outline btn-xs subloc-btn';
+    noneBtn.textContent = 'General / Default';
+    
+    if (!hiddenInput.value) {
+      noneBtn.classList.add('active');
+      foundCurrent = true;
+    }
+    
+    noneBtn.addEventListener('click', () => {
+      hiddenInput.value = '';
+      document.querySelectorAll('.subloc-btn').forEach(b => b.classList.remove('active'));
+      noneBtn.classList.add('active');
+    });
+    container.appendChild(noneBtn);
+
+    subLocs.forEach(sub => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-outline btn-xs subloc-btn';
+      btn.textContent = sub;
+      
+      if (hiddenInput.value === sub) {
+        btn.classList.add('active');
+        foundCurrent = true;
+      }
+      
+      btn.addEventListener('click', () => {
+        hiddenInput.value = sub;
+        document.querySelectorAll('.subloc-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+      container.appendChild(btn);
+    });
+
+    if (!foundCurrent) hiddenInput.value = '';
   },
 
   escape(str) {

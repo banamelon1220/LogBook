@@ -411,7 +411,7 @@ const Dashboard = {
         <span class="severity-dot" style="background:${severityColors[inc.severity] || '#64748b'}"></span>
         <div class="ri-info">
           <div class="ri-title">${this.escape(inc.title)}</div>
-          <div class="ri-meta">${inc.equipmentType} · ${inc.zone || '—'}</div>
+          <div class="ri-meta">${inc.equipmentType} · ${inc.zone || '—'}${inc.subLocation ? ` (${this.escape(inc.subLocation)})` : ''}</div>
         </div>
         <span class="ri-date">${this.formatDate(inc.timestamp)}</span>
       </div>

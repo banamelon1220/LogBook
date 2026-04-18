@@ -94,12 +94,14 @@ const Admin = {
       const typesText = document.getElementById('admin-types-input').value;
       const tagsText = document.getElementById('admin-tags-input').value;
       const notesText = document.getElementById('admin-notes-input').value;
+      const severityNotesText = document.getElementById('admin-severity-notes-input').value;
 
       const equipmentTypes = typesText.split('\n').map(t => t.trim()).filter(t => t);
       const commonTags = tagsText.split('\n').map(t => t.trim()).filter(t => t);
       const quickNotes = notesText.split('\n').map(t => t.trim()).filter(t => t);
+      const severityNotes = severityNotesText.trim();
 
-      await DB.updateSettings({ equipmentTypes, commonTags, quickNotes });
+      await DB.updateSettings({ equipmentTypes, commonTags, quickNotes, severityNotes });
       App.toast(I18n.t('admin.settingsSaved') || 'Configuration saved', 'success');
     });
 
@@ -188,5 +190,6 @@ const Admin = {
     document.getElementById('admin-types-input').value = (settings.equipmentTypes || []).join('\n');
     document.getElementById('admin-tags-input').value = (settings.commonTags || []).join('\n');
     document.getElementById('admin-notes-input').value = (settings.quickNotes || []).join('\n');
+    document.getElementById('admin-severity-notes-input').value = (settings.severityNotes || '');
   }
 };

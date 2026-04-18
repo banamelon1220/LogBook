@@ -49,7 +49,9 @@ const TableView = {
       const d = new Date(inc.timestamp).toLocaleString(locale).replace(/,/g, '');
       const eq = `"${(inc.equipmentType || '').replace(/"/g, '""')}"`;
       const qty = inc.count || 1;
-      const zn = `"${(inc.zone || '').replace(/"/g, '""')}"`;
+      const znBase = inc.zone || '';
+      const sub = inc.subLocation ? ` (${inc.subLocation})` : '';
+      const zn = `"${(znBase + sub).replace(/"/g, '""')}"`;
       const sev = inc.severity;
       const st = inc.status;
       const notes = `"${(inc.description || '').replace(/"/g, '""')}"`;
@@ -177,7 +179,7 @@ const TableView = {
         <td style="white-space:nowrap">${Dashboard.formatDate(inc.timestamp)}</td>
         <td>${this.escape(inc.equipmentType)}</td>
         <td style="text-align:center"><strong>x${inc.count || 1}</strong></td>
-        <td>${this.escape(inc.zone)}</td>
+        <td>${this.escape(inc.zone)} ${inc.subLocation ? `<span style="font-size:0.85em; color:var(--text-muted)">(${this.escape(inc.subLocation)})</span>` : ''}</td>
         <td class="notes-cell">${this.escape(inc.description || inc.title)}</td>
         <td><span class="badge ${sevClass}">${inc.severity}</span></td>
         <td><span class="badge ${stClass}">${I18n.t(inc.status === 'Resolved' ? 'editor.resolved' : 'editor.open') || inc.status}</span></td>
