@@ -103,7 +103,8 @@ const TableView = {
     const select = document.getElementById('filter-zone');
     while (select.options.length > 1) { select.remove(1); }
     const zones = await DB.getZones();
-    zones.sort((a,b) => a.order - b.order).forEach(zone => {
+    const mainZones = zones.filter(z => !z.parentId);
+    mainZones.sort((a,b) => a.order - b.order).forEach(zone => {
       const opt = document.createElement('option');
       opt.value = zone.name;
       opt.textContent = zone.name;

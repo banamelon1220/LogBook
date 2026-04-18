@@ -364,8 +364,10 @@
                 <!-- Zone buttons will be injected here -->
               </div>
               <div id="quick-sublocations-wrapper" style="margin-top: 8px; display: none;">
-                <label style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="editor.sublocation">Specific Location (Optional)</label>
-                <input type="hidden" id="edit-sublocation">
+                <label for="edit-sublocation" style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="editor.sublocation">Specific Location (Optional)</label>
+                <select id="edit-sublocation" class="input-sm" style="margin-bottom:4px; max-width: 200px; display:block;">
+                  <option value="">General / None</option>
+                </select>
                 <div id="quick-sublocations-container" class="quick-tags-list" style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
               </div>
               <!-- Mini Zone Map Reference -->
@@ -381,9 +383,12 @@
               </div>
             </div>
             <div class="form-row">
-              <div class="form-group">
-                <label for="edit-severity" data-i18n="editor.severity">Severity</label>
-                <div id="severity-guidance-note" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; display: none; white-space: pre-wrap; line-height: 1.4;"></div>
+              <div class="form-group" style="position: relative;">
+                <label for="edit-severity" data-i18n="editor.severity" style="display:inline-block;">Severity</label>
+                <button type="button" id="btn-severity-help" class="btn-icon" style="width:20px;height:20px;padding:0;margin-left:4px;vertical-align:middle;color:var(--text-muted);" title="Help">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </button>
+                <div id="severity-guidance-note" style="position:absolute; bottom:100%; left:0; width:min(300px, 100vw - 40px); background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px; font-size: 0.85rem; color: var(--text-primary); margin-bottom: 8px; display: none; white-space: pre-wrap; line-height: 1.4; box-shadow:var(--shadow-lg); z-index:10;"></div>
                 <select id="edit-severity" required>
                   <option value="">Select...</option>
                   <option value="Low">🟢 Low</option>
@@ -485,12 +490,15 @@
             <form id="zone-form">
               <input type="hidden" id="zone-edit-id">
               <div class="form-group">
-                <label for="zone-name" data-i18n="zones.name">Zone Name</label>
-                <input type="text" id="zone-name" placeholder="e.g. Line A, Freezer Room 1" required>
+                <label for="zone-name" data-i18n="zones.name">Zone / Sub-Location Name</label>
+                <input type="text" id="zone-name" placeholder="e.g. Line A, Corner 1" required>
               </div>
               <div class="form-group">
-                <label for="zone-sublocations" data-i18n="zones.sublocations">Sub-locations</label>
-                <input type="text" id="zone-sublocations" placeholder="e.g. Corner 1, Corner 2 (Comma separated)">
+                <label for="zone-parent" data-i18n="zones.parentZone">Parent Zone (Optional)</label>
+                <select id="zone-parent">
+                  <option value="">None (Main Zone)</option>
+                </select>
+                <small class="text-muted" style="font-size:0.75rem; display:block; margin-top:4px;">Setting a parent makes this a sub-location.</small>
               </div>
               <div class="form-group">
                 <label for="zone-color" data-i18n="zones.color">Color</label>

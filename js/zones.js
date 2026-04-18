@@ -124,12 +124,26 @@ const Zones = {
     });
   },
 
-  openModal(zone) {
+  async openModal(zone) {
     this.activeId = zone ? zone.id : null;
     document.getElementById('zone-modal-title').textContent = zone ? I18n.t('zones.editZone') : I18n.t('zones.addZone');
     document.getElementById('zone-name').value = zone ? zone.name : '';
     document.getElementById('zone-color').value = zone ? zone.color : '#0ea5e9';
-    document.getElementById('zone-sublocations').value = (zone && zone.subLocations) ? zone.subLocations : '';
+    
+    const parentSelect = document.getElementById('zone-parent');
+    parentSelect.innerHTML = '<option value="">None (Main Zone)</option>';
+    const allZones = await DB.getZones(this.activeMapId);
+    allZones.forEach(z => {
+      // Cannot be parent of itself, and we only want to nest 1 level deep (so parents shouldn't have parents)
+      if ((!zone || z.id !== zone.id) && !z.parentId) {
+        const opt = document.createElement('option');
+        opt.value = z.id;
+        opt.textContent = z.name;
+        parentSelect.appendChild(opt);
+      }
+    });
+
+    parentSelect.value = (zone && zone.parentId) ? zone.parentId : '';
     
     if (zone) {
       this.pendingX = zone.x;
@@ -277,12 +291,12 @@ const Zones = {
   async save() {
     const name = document.getElementById('zone-name').value;
     const color = document.getElementById('zone-color').value;
-    const subLocations = document.getElementById('zone-sublocations').value;
+    const parentId = document.getElementById('zone-parent').value;
 
     const data = { 
       name, 
       color,
-      subLocations,
+      parentId: parentId || null,
       mapId: this.activeMapId
     };
 

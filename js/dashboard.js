@@ -69,8 +69,19 @@ const Dashboard = {
 
     zones.forEach(z => {
       if (z.x != null && z.y != null) {
+        let pZone = null;
+        if (z.parentId) pZone = zones.find(pz => pz.id === z.parentId);
+        
         // Find if this zone has open issues
-        const openIssuesCount = allIncidents.filter(i => i.zone === z.name && i.status === 'Open').length;
+        const openIssuesCount = allIncidents.filter(i => {
+          if (i.status !== 'Open') return false;
+          if (z.parentId) {
+            return pZone && i.zone === pZone.name && i.subLocation === z.name;
+          } else {
+            return i.zone === z.name; 
+          }
+        }).length;
+
         const isRect = z.w != null && z.h != null;
 
         const el = document.createElement('div');
@@ -85,7 +96,8 @@ const Dashboard = {
           el.style.background = z.color + '15'; 
           
           let hintText = openIssuesCount > 0 ? `${openIssuesCount} OPEN` : 'OK';
-          el.innerHTML = `<span class="zone-rect-label">${this.escape(z.name)} - ${hintText}</span>`;
+          let pName = z.parentId ? `└ ${this.escape(z.name)}` : this.escape(z.name);
+          el.innerHTML = `<span class="zone-rect-label" style="white-space:pre">${pName} - ${hintText}</span>`;
         } else {
           el.className = `map-pin ${openIssuesCount > 0 ? 'has-open' : 'is-ok'}`;
           el.style.left = z.x + '%';
@@ -93,24 +105,33 @@ const Dashboard = {
           el.style.backgroundColor = z.color;
           
           let hintText = openIssuesCount > 0 ? `${openIssuesCount} OPEN` : 'OK';
-          el.innerHTML = `<span class="map-pin-label">${this.escape(z.name)} - ${hintText}</span>`;
+          let pName = z.parentId ? `└ ${this.escape(z.name)}` : this.escape(z.name);
+          el.innerHTML = `<span class="map-pin-label" style="white-space:pre">${pName} - ${hintText}</span>`;
         }
 
         el.addEventListener('click', async () => {
           if (openIssuesCount > 0) {
             // View open issues
-            document.getElementById('filter-zone').value = z.name;
+            document.getElementById('filter-zone').value = (z.parentId && pZone) ? pZone.name : z.name;
             document.getElementById('filter-status').value = 'Open';
             await App.navigate('table');
           } else {
             // Add new incident in this zone
             await Editor.openNew();
             const zoneSelect = document.getElementById('edit-zone');
-            zoneSelect.value = z.name;
-            // Also update the quick-zone buttons
-            document.querySelectorAll('.zone-btn').forEach(btn => {
-              btn.classList.toggle('active', btn.dataset.zone === z.name);
-            });
+            if (z.parentId && pZone) {
+               zoneSelect.value = pZone.name;
+               document.querySelectorAll('.zone-btn').forEach(btn => {
+                 btn.classList.toggle('active', btn.dataset.zone === pZone.name);
+               });
+               Editor.updateSubLocationsUI(pZone.name, z.name);
+            } else {
+               zoneSelect.value = z.name;
+               document.querySelectorAll('.zone-btn').forEach(btn => {
+                 btn.classList.toggle('active', btn.dataset.zone === z.name);
+               });
+               Editor.updateSubLocationsUI(z.name);
+            }
           }
         });
 

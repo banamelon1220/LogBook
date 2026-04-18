@@ -48,11 +48,41 @@ const Editor = {
         btn.classList.add('active');
       });
     });
+    // Severity Help
+    const btnHelp = document.getElementById('btn-severity-help');
+    const noteEl = document.getElementById('severity-guidance-note');
+    if (btnHelp && noteEl) {
+      btnHelp.addEventListener('click', (e) => {
+        e.preventDefault();
+        noteEl.style.display = noteEl.style.display === 'none' ? 'block' : 'none';
+      });
+      document.getElementById('edit-severity').addEventListener('focus', () => {
+        if (noteEl.textContent.trim()) {
+           noteEl.style.display = 'block';
+        }
+      });
+      document.getElementById('edit-severity').addEventListener('change', () => {
+        noteEl.style.display = 'none';
+      });
+    }
 
     // Zone change
-    document.getElementById('edit-zone').addEventListener('change', (e) => {
-      this.updateSubLocationsUI(e.target.value);
-    });
+    const zoneSel = document.getElementById('edit-zone');
+    if (zoneSel) {
+      zoneSel.addEventListener('change', (e) => {
+        this.updateSubLocationsUI(e.target.value);
+      });
+    }
+    
+    // Sublocation select change
+    const subSel = document.getElementById('edit-sublocation');
+    if (subSel) {
+      subSel.addEventListener('change', (e) => {
+        document.querySelectorAll('.subloc-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.subloc === e.target.value);
+        });
+      });
+    }
 
     // Count Buttons (+/-)
     document.getElementById('btn-count-plus').addEventListener('click', () => {
@@ -257,10 +287,12 @@ const Editor = {
     const severityNoteEl = document.getElementById('severity-guidance-note');
     if (settings.severityNotes && settings.severityNotes.trim()) {
       severityNoteEl.textContent = settings.severityNotes.trim();
-      severityNoteEl.style.display = 'block';
+      severityNoteEl.style.display = 'none'; // Hidden by default
     } else {
       severityNoteEl.style.display = 'none';
       severityNoteEl.textContent = '';
+      const btnHelp = document.getElementById('btn-severity-help');
+      if (btnHelp) btnHelp.style.display = 'none';
     }
     
     // Equipment
@@ -286,14 +318,17 @@ const Editor = {
       eqContainer.appendChild(btn);
     });
 
-    // Zones
+    // Zones (Main zones only)
     const zoneSelect = document.getElementById('edit-zone');
     zoneSelect.innerHTML = '<option value="">Select...</option>';
     const zones = (await DB.getZones()).sort((a,b) => a.order - b.order);
     this._cachedZones = zones;
     const zonesContainer = document.getElementById('quick-zones-container');
     zonesContainer.innerHTML = '';
-    zones.forEach(zone => {
+    
+    const mainZones = zones.filter(z => !z.parentId);
+    
+    mainZones.forEach(zone => {
       zoneSelect.innerHTML += `<option value="${zone.name}">${zone.name}</option>`;
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -477,78 +512,115 @@ const Editor = {
         el.style.left = z.x + '%';
         el.style.top = z.y + '%';
         el.style.backgroundColor = z.color;
-        el.innerHTML = `<span class="map-pin-label" style="font-size:10px">${this.escape(z.name)}</span>`;
+        let pName = z.parentId ? `└ ${this.escape(z.name)}` : this.escape(z.name);
+        el.innerHTML = `<span class="map-pin-label" style="font-size:10px; white-space:pre">${pName}</span>`;
       }
 
-      // Click pin to select that zone
+      // Click pin to select that zone / sublocation
       el.style.cursor = 'pointer';
       el.addEventListener('click', () => {
-        zoneSelect.value = z.name;
-        document.querySelectorAll('.zone-btn').forEach(b => {
-          b.classList.toggle('active', b.dataset.zone === z.name);
-        });
-        this.updateSubLocationsUI(z.name);
+        if (z.parentId) {
+           const pZone = zones.find(pz => pz.id === z.parentId);
+           if (pZone) {
+             zoneSelect.value = pZone.name;
+             document.querySelectorAll('.zone-btn').forEach(b => {
+               b.classList.toggle('active', b.dataset.zone === pZone.name);
+             });
+             this.updateSubLocationsUI(pZone.name, z.name);
+           }
+        } else {
+           zoneSelect.value = z.name;
+           document.querySelectorAll('.zone-btn').forEach(b => {
+             b.classList.toggle('active', b.dataset.zone === z.name);
+           });
+           this.updateSubLocationsUI(z.name);
+        }
       });
       pinsEl.appendChild(el);
     });
   },
 
-  updateSubLocationsUI(zoneName) {
+  updateSubLocationsUI(parentZoneName, autoSelectSub = null) {
     const wrapper = document.getElementById('quick-sublocations-wrapper');
     const container = document.getElementById('quick-sublocations-container');
-    const hiddenInput = document.getElementById('edit-sublocation');
+    const select = document.getElementById('edit-sublocation');
+    
     container.innerHTML = '';
+    select.innerHTML = '<option value="">General / None</option>';
 
-    const zone = (this._cachedZones || []).find(z => z.name === zoneName);
-    if (!zone || !zone.subLocations || !zone.subLocations.trim()) {
+    const parentZone = (this._cachedZones || []).find(z => z.name === parentZoneName);
+    if (!parentZone) {
       wrapper.style.display = 'none';
-      hiddenInput.value = ''; 
+      select.value = ''; 
+      return;
+    }
+
+    const childZones = (this._cachedZones || []).filter(z => z.parentId === parentZone.id);
+    
+    if (childZones.length === 0) {
+      wrapper.style.display = 'none';
+      select.value = ''; 
       return;
     }
 
     wrapper.style.display = 'block';
-    const subLocs = zone.subLocations.split(',').map(s => s.trim()).filter(s => s);
     
+    // Remember current selection if it exists in children, or use the injected autoSelectSub
     let foundCurrent = false;
-
+    let targetSelect = autoSelectSub;
+    if (targetSelect == null) {
+      // Check if current value exists in our new list
+      targetSelect = select.value; 
+    }
+    
     // None default option
     const noneBtn = document.createElement('button');
     noneBtn.type = 'button';
     noneBtn.className = 'btn btn-outline btn-xs subloc-btn';
-    noneBtn.textContent = 'General / Default';
+    noneBtn.textContent = 'General / None';
+    noneBtn.dataset.subloc = '';
     
-    if (!hiddenInput.value) {
+    if (!targetSelect) {
       noneBtn.classList.add('active');
       foundCurrent = true;
+      select.value = '';
     }
     
     noneBtn.addEventListener('click', () => {
-      hiddenInput.value = '';
+      select.value = '';
       document.querySelectorAll('.subloc-btn').forEach(b => b.classList.remove('active'));
       noneBtn.classList.add('active');
     });
     container.appendChild(noneBtn);
 
-    subLocs.forEach(sub => {
+    childZones.forEach(sub => {
+      select.innerHTML += `<option value="${sub.name}">${sub.name}</option>`;
+      
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn btn-outline btn-xs subloc-btn';
-      btn.textContent = sub;
+      btn.textContent = sub.name;
+      btn.dataset.subloc = sub.name;
       
-      if (hiddenInput.value === sub) {
+      if (targetSelect === sub.name) {
         btn.classList.add('active');
         foundCurrent = true;
       }
       
       btn.addEventListener('click', () => {
-        hiddenInput.value = sub;
+        select.value = sub.name;
         document.querySelectorAll('.subloc-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
       });
       container.appendChild(btn);
     });
 
-    if (!foundCurrent) hiddenInput.value = '';
+    if (!foundCurrent) {
+        select.value = '';
+        noneBtn.classList.add('active');
+    } else {
+        select.value = targetSelect || '';
+    }
   },
 
   escape(str) {
